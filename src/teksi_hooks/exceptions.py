@@ -60,11 +60,34 @@ class TeksiHookError(TeksiHookException):
     def from_message(
         cls,
         message: str,
+        severity: Severity | str | None = None,
     ) -> TeksiHookError:
+        """
+        Create an error containing a single finding.
+
+        Severity defaults to `Severity.ERROR`. String values must correspond
+        to one of the values defined by `Severity`.
+        """
+
+        try:
+            if severity is None:
+                resolved_severity = Severity.ERROR
+            elif isinstance(severity, Severity):
+                resolved_severity = severity
+            elif isinstance(severity, str):
+                resolved_severity = Severity(severity.lower())
+        except ValueError as error:
+            allowed_severities = ", ".join(member.value for member in Severity)
+
+            raise ValueError(
+                f"Invalid severity {severity!r} for message {message!r}. "
+                f"Expected one of: {allowed_severities}."
+            ) from error
+
         return cls(
-            (
+            findings=(
                 Finding(
-                    severity=Severity.ERROR,
+                    severity=resolved_severity,
                     message=message,
                 ),
             ),

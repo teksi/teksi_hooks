@@ -34,7 +34,9 @@ class ProviderRightsParser:
             self.oid_type,
             Oid,
         ):
-            raise TeksiHookError("Provided oid_type must inherit from Oid.")
+            raise TeksiHookError.from_message(
+                "Provided oid_type must inherit from Oid."
+            )
 
     def parse_file(
         self,

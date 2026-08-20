@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from typing import ClassVar
 from re import Pattern
 
-from ..exceptions import ValidationError, Finding, Severity
+from ..exceptions import ValidationError
 
 
 @dataclass(slots=True, frozen=True)
@@ -34,15 +34,8 @@ class Oid(ABC):
         if not self._pattern.fullmatch(
             self.value,
         ):
-            raise ValidationError(
-                (
-                    Finding(
-                        severity=Severity.ERROR,
-                        message=(
-                            f"'{self.value}' is not a valid {self.__class__.__name__}."
-                        ),
-                    ),
-                ),
+            raise ValidationError.from_message(
+                f"'{self.value}' is not a valid {self.__class__.__name__}."
             )
 
     def __str__(

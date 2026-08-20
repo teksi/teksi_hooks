@@ -8,6 +8,7 @@ from typing import Any
 from .privilege import PrivilegeId
 from .rulesets import StateTransitionRule
 from ..exceptions import Severity, Finding
+from .canonical_object import CanonicalObjectIdentity
 
 
 from collections.abc import Mapping
@@ -166,6 +167,17 @@ class Change:
             )
             for attribute in attribute_names
             if self.old_values.get(attribute) != self.new_values.get(attribute)
+        )
+
+    @property
+    def identity(
+        self,
+    ) -> CanonicalObjectIdentity:
+        return CanonicalObjectIdentity(
+            class_id=self.table_name,
+            attributes={
+                "obj_id": self.object_id,
+            },
         )
 
 
