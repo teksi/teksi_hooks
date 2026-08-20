@@ -49,8 +49,7 @@ class SnapshotObject:
         metadata={"doc": ("Canonical identity of the referenced object.")},
     )
 
-    last_modification: datetime | None = field(
-        default=None,
+    last_modification: datetime = field(
         metadata={
             "doc": (
                 "Object last_modification value recorded when the "
