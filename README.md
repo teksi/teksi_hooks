@@ -2,6 +2,9 @@
 
 A lightweight capability-based framework for implementing TEKSI workflows.
 
+## Documentation
+See [https://teksi.github.io/teksi_hooks/index.html](https://teksi.github.io/teksi_hooks/index.html)
+
 ## Overview
 
 `teksi_hooks` provides reusable building blocks for rights evaluation, validation,
