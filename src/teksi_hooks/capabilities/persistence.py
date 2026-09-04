@@ -1,13 +1,15 @@
+# src/teksi_hooks/capabilities/persistence.py
+
 from __future__ import annotations
 
-from collections.abc import Sequence
 from typing import Protocol
 
-from ..models.validation import (
-    Change,
-)
 from ..models.persistence import (
-    ChangePersistenceResult,
+    ChangePersistenceDocument,
+    PersistenceResult,
+)
+from ..models.diff_snapshot import (
+    DiffSnapshot,
 )
 
 
@@ -15,17 +17,41 @@ class ChangePersistenceCapability(
     Protocol,
 ):
     """
-    Atomically persist accepted canonical changes.
+    Capability for persisting one accepted diff snapshot.
+
+    The snapshot represents the immutable state that was reviewed. The
+    persistence document contains the object-level and attribute-level
+    decisions made for that exact snapshot.
     """
 
-    def persist_changes(
+    def persist_snapshot(
         self,
-        *,
-        changes: Sequence[Change],
-    ) -> ChangePersistenceResult:
+        snapshot: DiffSnapshot,
+        decisions: ChangePersistenceDocument,
+    ) -> PersistenceResult:
         """
-        Apply accepted canonical changes to live data.
+        Persist one accepted diff snapshot atomically.
 
-        The operation must be atomic. If any change cannot be applied, no
-        change may remain committed.
+        Parameters
+        ----------
+        snapshot:
+            Immutable reviewed snapshot.
+
+        decisions:
+            Persistence decisions associated with the reviewed snapshot.
+            The document's snapshot identifier must equal
+            ``snapshot.snapshot_id``.
+
+        Returns
+        -------
+        PersistenceResult
+            Aggregate result for the completed persistence operation.
+
+        Raises
+        ------
+        Exception
+            If the snapshot and decisions do not match, or if the complete
+            snapshot cannot be persisted atomically.
         """
+
+        ...

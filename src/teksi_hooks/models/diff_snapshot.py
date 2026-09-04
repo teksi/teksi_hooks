@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import StrEnum
+from uuid import UUID, uuid4
 
 from .effects import Effect
 from .canonical_object import CanonicalObjectIdentity
@@ -71,6 +72,17 @@ class DiffSnapshot:
 
     metadata: SnapshotMetadata = field(
         metadata={"doc": ("Snapshot creation metadata.")},
+    )
+
+    snapshot_id: UUID = field(
+        default_factory=uuid4,
+        metadata={
+            "doc": (
+                "Stable identifier of this immutable snapshot. "
+                "Persistence decisions must reference this identifier to "
+                "prevent decisions from being applied to another snapshot."
+            )
+        },
     )
 
     objects: tuple[SnapshotObject, ...] = field(
