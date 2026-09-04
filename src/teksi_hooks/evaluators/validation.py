@@ -152,6 +152,7 @@ class ValidationEvaluator:
         findings: list[ValidationFinding] = []
 
         context = ValidationContext(
+            class_id=class_id,
             attribute_name=attribute_name,
             old_value=old_value,
             new_value=new_value,

@@ -21,25 +21,6 @@ settings:
 defaults:
   read_rules:
       - privileges: all
-  validation_rules:
-    last_modification:
-      rules:
-        - id: newer_than_existing
-          level: info
-    fk_provider:
-      rules:
-        - id: equals_context_value
-          context_value: provider_oid
-          level: error
-          operations:
-            - insert
-    fk_dataowner:
-      rules:
-        - id: equals_context_value
-          context_value: dataowner_oid
-          level: error
-          operations:
-            - insert
 
   attribute_defaults:
     ag64_*:

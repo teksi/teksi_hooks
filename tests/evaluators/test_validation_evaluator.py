@@ -72,7 +72,18 @@ def test_validation_evaluator_uses_registry(
 
     validator.assert_called_once()
 
-    assert len(findings) == 1
+    validation_context = validator.call_args.kwargs["context"]
+
+    assert validation_context.class_id == ("wastewater_structure")
+
+    assert validation_context.attribute_name == ("status_survey_year")
+
+    assert (
+        len(
+            findings,
+        )
+        == 1
+    )
 
 
 def test_validation_evaluator_accepts_allowed_transition(
@@ -118,7 +129,8 @@ def test_validation_evaluator_accepts_bilateral_transition(
 
 
 def test_validation_evaluator_accepts_transitive_transition(
-    resolved_rights, registry
+    resolved_rights,
+    registry,
 ) -> None:
     evaluator = ValidationEvaluator(
         rights=RightsCapability(
@@ -138,7 +150,8 @@ def test_validation_evaluator_accepts_transitive_transition(
 
 
 def test_validation_evaluator_rejects_invalid_transition(
-    resolved_rights, registry
+    resolved_rights,
+    registry,
 ) -> None:
     evaluator = ValidationEvaluator(
         rights=RightsCapability(
@@ -154,11 +167,15 @@ def test_validation_evaluator_rejects_invalid_transition(
         new_value="invalid_state",
     )
 
-    assert len(findings) == 1
+    assert (
+        len(
+            findings,
+        )
+        == 1
+    )
 
-    assert findings[0].code == ("invalid_transition")
-
-    assert findings[0].attribute_name == ("status")
+    assert findings[0].code == "invalid_transition"
+    assert findings[0].attribute_name == "status"
 
 
 def test_validation_evaluator_ignores_attribute_without_transition_rules(
@@ -184,11 +201,14 @@ def test_validation_evaluator_ignores_attribute_without_transition_rules(
 
 def test_validation_evaluator_uses_transitive_transition_flag(
     rights_definition_non_transitive,
+    validation_definition,
     registry,
 ) -> None:
     resolved_rights = RightsResolver().resolve(
-        rights_definition_non_transitive,
+        definition=rights_definition_non_transitive,
+        validation_definition=validation_definition,
     )
+
     evaluator = ValidationEvaluator(
         rights=RightsCapability(
             rights=resolved_rights,
@@ -203,21 +223,26 @@ def test_validation_evaluator_uses_transitive_transition_flag(
         new_value="operational",
     )
 
-    assert len(findings) == 1
-
-    assert findings[0].code == ("invalid_transition")
-
-    assert findings[0].attribute_name == ("status")
-
-    def test_validation_finding_is_created() -> None:
-        finding = ValidationFinding(
-            code="newer_than_existing",
-            severity=Severity.WARNING,
-            message="Value is older than existing value.",
-            attribute_name="status",
+    assert (
+        len(
+            findings,
         )
+        == 1
+    )
 
-        assert finding.code == "newer_than_existing"
+    assert findings[0].code == "invalid_transition"
+    assert findings[0].attribute_name == "status"
+
+
+def test_validation_finding_is_created() -> None:
+    finding = ValidationFinding(
+        code="newer_than_existing",
+        severity=Severity.WARNING,
+        message="Value is older than existing value.",
+        attribute_name="status",
+    )
+
+    assert finding.code == "newer_than_existing"
 
 
 def test_validation_evaluator_accepts_newer_than_existing(
@@ -233,6 +258,7 @@ def test_validation_evaluator_accepts_newer_than_existing(
     )(
         validation=validation,
         context=ValidationContext(
+            class_id="wastewater_structure",
             attribute_name="last_modification",
             old_value="2024-01-01T00:00:00",
             new_value="2025-01-01T00:00:00",
@@ -255,15 +281,21 @@ def test_validation_evaluator_rejects_older_than_existing(
     )(
         validation=validation,
         context=ValidationContext(
+            class_id="wastewater_structure",
             attribute_name="last_modification",
             old_value="2025-01-01T00:00:00",
             new_value="2024-01-01T00:00:00",
         ),
     )
 
-    assert len(findings) == 1
+    assert (
+        len(
+            findings,
+        )
+        == 1
+    )
 
-    assert findings[0].code == ("newer_than_existing")
+    assert findings[0].code == "newer_than_existing"
 
 
 def test_validation_evaluator_accepts_non_decreasing_value(
@@ -279,6 +311,7 @@ def test_validation_evaluator_accepts_non_decreasing_value(
     )(
         validation=validation,
         context=ValidationContext(
+            class_id="wastewater_structure",
             attribute_name="inspection_year",
             old_value=2018,
             new_value=2024,
@@ -301,15 +334,21 @@ def test_validation_evaluator_rejects_decreasing_value(
     )(
         validation=validation,
         context=ValidationContext(
+            class_id="wastewater_structure",
             attribute_name="inspection_year",
             old_value=2024,
             new_value=2018,
         ),
     )
 
-    assert len(findings) == 1
+    assert (
+        len(
+            findings,
+        )
+        == 1
+    )
 
-    assert findings[0].code == ("cannot_decrease")
+    assert findings[0].code == "cannot_decrease"
 
 
 def test_validation_registry_rejects_unknown_validation(
@@ -342,12 +381,15 @@ def test_validation_evaluator_executes_cannot_decrease(
         operation=ChangeOperation.UPDATE,
     )
 
-    assert len(findings) == 1
+    assert (
+        len(
+            findings,
+        )
+        == 1
+    )
 
-    assert findings[0].code == ("cannot_decrease")
-
-    assert findings[0].attribute_name == ("status_survey_year")
-
+    assert findings[0].code == "cannot_decrease"
+    assert findings[0].attribute_name == "status_survey_year"
     assert findings[0].severity == Severity.WARNING
 
 
@@ -388,12 +430,16 @@ def test_validation_evaluator_validates_change(
         change=change,
     )
 
-    assert len(findings) == 1
+    assert (
+        len(
+            findings,
+        )
+        == 1
+    )
 
     finding = findings[0]
 
     assert finding.code == "cannot_decrease"
-
     assert finding.attribute_name == "status_survey_year"
 
 
@@ -490,9 +536,7 @@ def test_validation_evaluator_rejects_insert_context_value_mismatch(
     )
 
     assert findings[0].code == "equals_context_value"
-
     assert findings[0].severity == Severity.ERROR
-
     assert findings[0].attribute_name == "fk_provider"
 
 

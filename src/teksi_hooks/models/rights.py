@@ -5,7 +5,7 @@ from collections.abc import Mapping
 from typing import Any
 
 from .privilege import PrivilegeId, PrivilegeMetadata
-from .validation import AttributeValidation, TransitionValidation
+from .validation import AttributeValidation, TransitionValidation, ObjectValidation
 from .rulesets import CrudRules, ResolvedCrudRules, StateTransitionRule
 from .canonical_object import CanonicalObjectIdentity
 from pathlib import Path
@@ -301,6 +301,33 @@ class DefaultDefinitions:
             )
         },
     )
+    attribute_validation_rules: Mapping[
+        str,
+        tuple[AttributeValidation, ...],
+    ] = field(
+        default_factory=dict,
+        metadata={
+            "doc": (
+                "Default attribute validation rules keyed by canonical "
+                "attribute identifier. The resolver copies matching rules "
+                "into AttributeDefinition.validations."
+            )
+        },
+    )
+
+    object_validation_rules: Mapping[
+        str,
+        ObjectValidation,
+    ] = field(
+        default_factory=dict,
+        metadata={
+            "doc": (
+                "Named object-level validation definitions. The resolver "
+                "applies a definition to classes containing all canonical "
+                "value names required by its rules."
+            )
+        },
+    )
 
 
 @dataclass(slots=True)
@@ -414,6 +441,22 @@ class ResolvedClassDefinition:
         },
     )
 
+    object_validations: tuple[ObjectValidation, ...] = field(
+        default_factory=tuple,
+        metadata={
+            "doc": ("Resolved object-level validation rules for this canonical class.")
+        },
+    )
+
+    mandatory_attributes: frozenset[str] = field(
+        default_factory=frozenset,
+        metadata={
+            "doc": (
+                "Effective canonical attributes that require a value. "
+                "Class-specific declarations extend the validation defaults."
+            )
+        },
+    )
     # add when needed for debugging
     # resolution_info: ResolutionInfo | None = None
 
