@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
+from enum import StrEnum
 from typing import Any
 from uuid import UUID
 
@@ -11,6 +12,16 @@ from .canonical_object import (
 from .validation import (
     Change,
 )
+
+
+class DiffJobMode(StrEnum):
+    """
+    Defines how an existing diff job is handled.
+    """
+
+    CREATE = "create"
+    REPLACE = "replace"
+    REFRESH = "refresh"
 
 
 @dataclass(
