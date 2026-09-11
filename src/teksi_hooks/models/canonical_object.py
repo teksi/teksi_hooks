@@ -84,7 +84,7 @@ class CanonicalObjectIdentity:
         """
 
         return uuid5(
-            namespace.value,
+            namespace.model_uuid,
             f"class:{self.class_id}",
         )
 
