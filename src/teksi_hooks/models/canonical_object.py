@@ -10,15 +10,53 @@ from uuid import UUID, uuid5
 
 class TeksiModelNamespaces(Enum):
     """
-    Stable UUID namespaces for TEKSI model modules.
+    Stable identifiers for canonical infrastructure models.
 
-    Existing namespace UUIDs must never be changed after generated model
-    element UUIDs have been persisted or exchanged.
+    Member names are Python identifiers. The tuple contains the stable
+    external model key and its persisted UUID.
     """
 
-    "wastewater" == UUID("37215468-fbf1-463b-be5b-38f95f39e52e")
-    "protection_tube" == UUID("7c3d0a0e-3808-4a66-b9dc-3a98951fb626")
-    "cable" == UUID("e1f6dd3b-8c31-4cd2-8ca1-d5688c81926c")
+    WASTEWATER = (
+        "wastewater",
+        UUID(
+            "37215468-fbf1-463b-be5b-38f95f39e52e",
+        ),
+    )
+    PROTECTION_TUBE = (
+        "protection_tube",
+        UUID(
+            "7c3d0a0e-3808-4a66-b9dc-3a98951fb626",
+        ),
+    )
+    CABLE = (
+        "cable",
+        UUID(
+            "e1f6dd3b-8c31-4cd2-8ca1-d5688c81926c",
+        ),
+    )
+
+    def __init__(
+        self,
+        identifier: str,
+        model_uuid: UUID,
+    ) -> None:
+        self.identifier = identifier
+        self.model_uuid = model_uuid
+
+    @classmethod
+    def from_identifier(
+        cls,
+        identifier: str,
+    ) -> TeksiModelNamespaces:
+        """
+        Return the canonical model matching an external identifier.
+        """
+
+        for model in cls:
+            if model.identifier == identifier:
+                return model
+
+        raise ValueError(f"Unknown canonical model identifier: {identifier!r}.")
 
 
 @dataclass(slots=True, frozen=True)
