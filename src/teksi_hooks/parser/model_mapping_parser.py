@@ -19,6 +19,7 @@ from ..models.mapping import (
     RelationMapping,
     ValueListMapping,
 )
+from ..resolver.model_mapping_resolver import ModelMappingInheritanceResolver
 
 
 @dataclass(slots=True)
@@ -70,9 +71,12 @@ class ModelMappingParser:
         mappings = self.parse_models_file(
             path,
         )
+        resolved_mappings = ModelMappingInheritanceResolver(
+            mappings=mappings
+        ).resolve_all()
 
         return self._select_model(
-            mappings=mappings,
+            mappings=resolved_mappings,
             model_id=model_id,
         )
 

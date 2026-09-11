@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from collections.abc import Mapping
 
 from ..capabilities.mapping import (
     ImplicitModelMappingCapability,
@@ -34,7 +35,7 @@ class ImplicitModelMappingResolver:
 
     dictionary: ImplicitModelMappingCapability
 
-    source_identity_attribute: str = "t_ili_tid"
+    source_identity_attribute: str = "obj_id"
 
     canonical_identity_attribute: str = "obj_id"
 
@@ -267,3 +268,246 @@ class ImplicitModelMappingResolver:
             raise ValueError(f"{context} must not be empty.")
 
         return normalized
+
+
+@dataclass(slots=True, frozen=True)
+class ModelMappingInheritanceResolver:
+    """
+    Resolve inheritance between named model mappings.
+
+    This resolver combines parsed model declarations. It does not inspect
+    source relations and does not apply conditional defaults to concrete
+    source classes.
+
+    Parent definitions are inherited first. Child definitions with the same
+    key replace the corresponding parent definitions.
+    """
+
+    mappings: Mapping[
+        str,
+        ModelMapping,
+    ]
+
+    def resolve(
+        self,
+        model_id: str,
+    ) -> ModelMapping:
+        """
+        Return one inheritance-resolved model mapping.
+        """
+
+        return self._resolve(
+            model_id=model_id,
+            resolving=(),
+            cache={},
+        )
+
+    def resolve_all(
+        self,
+    ) -> dict[
+        str,
+        ModelMapping,
+    ]:
+        """
+        Return all model mappings with inheritance resolved.
+        """
+
+        cache: dict[
+            str,
+            ModelMapping,
+        ] = {}
+
+        return {
+            model_id: self._resolve(
+                model_id=model_id,
+                resolving=(),
+                cache=cache,
+            )
+            for model_id in self.mappings
+        }
+
+    def _resolve(
+        self,
+        *,
+        model_id: str,
+        resolving: tuple[
+            str,
+            ...,
+        ],
+        cache: dict[
+            str,
+            ModelMapping,
+        ],
+    ) -> ModelMapping:
+        cached = cache.get(
+            model_id,
+        )
+
+        if cached is not None:
+            return cached
+
+        if model_id in resolving:
+            cycle_start = resolving.index(
+                model_id,
+            )
+
+            cycle = (
+                *resolving[cycle_start:],
+                model_id,
+            )
+
+            raise ValueError(
+                "Model mapping inheritance cycle: "
+                + " -> ".join(
+                    cycle,
+                )
+            )
+
+        try:
+            child = self.mappings[model_id]
+        except KeyError as exception:
+            raise KeyError(f"Unknown model mapping {model_id!r}.") from exception
+
+        parent_id = child.defaults.inherit_from
+
+        if parent_id is None:
+            resolved = self._without_inheritance(
+                child,
+            )
+        else:
+            if parent_id not in self.mappings:
+                raise KeyError(
+                    f"Model mapping {model_id!r} inherits unknown model {parent_id!r}."
+                )
+
+            parent = self._resolve(
+                model_id=parent_id,
+                resolving=(
+                    *resolving,
+                    model_id,
+                ),
+                cache=cache,
+            )
+
+            resolved = self._merge(
+                parent=parent,
+                child=child,
+            )
+
+        cache[model_id] = resolved
+
+        return resolved
+
+    def _merge(
+        self,
+        *,
+        parent: ModelMapping,
+        child: ModelMapping,
+    ) -> ModelMapping:
+        """
+        Merge one child mapping over its resolved parent.
+        """
+
+        defaults = self._merge_defaults(
+            parent=parent.defaults,
+            child=child.defaults,
+        )
+
+        classes = self._merge_classes(
+            parent=parent.classes,
+            child=child.classes,
+        )
+
+        return ModelMapping(
+            defaults=defaults,
+            classes=classes,
+            is_ssot=child.is_ssot,
+            languages=(child.languages if child.languages else parent.languages),
+        )
+
+    def _merge_defaults(
+        self,
+        *,
+        parent: MappingDefaults,
+        child: MappingDefaults,
+    ) -> MappingDefaults:
+        """
+        Merge model defaults.
+
+        Child keyed definitions replace parent definitions with the same key.
+        """
+
+        return MappingDefaults(
+            identity=child.identity,
+            identities={
+                **parent.identities,
+                **child.identities,
+            },
+            attributes={
+                **parent.attributes,
+                **child.attributes,
+            },
+            relations={
+                **parent.relations,
+                **child.relations,
+            },
+            inherit_from=None,
+        )
+
+    def _merge_classes(
+        self,
+        *,
+        parent: Mapping[
+            str,
+            ClassMapping,
+        ],
+        child: Mapping[
+            str,
+            ClassMapping,
+        ],
+    ) -> dict[
+        str,
+        ClassMapping,
+    ]:
+        """
+        Merge classes with complete child-class replacement.
+
+        A child class declaration replaces the inherited class declaration
+        having the same source class identifier.
+        """
+
+        return {
+            **parent,
+            **child,
+        }
+
+    def _without_inheritance(
+        self,
+        mapping: ModelMapping,
+    ) -> ModelMapping:
+        """
+        Return a root mapping with its inheritance marker removed.
+        """
+
+        defaults = mapping.defaults
+
+        return ModelMapping(
+            defaults=MappingDefaults(
+                identity=defaults.identity,
+                identities=dict(
+                    defaults.identities,
+                ),
+                attributes=dict(
+                    defaults.attributes,
+                ),
+                relations=dict(
+                    defaults.relations,
+                ),
+                inherit_from=None,
+            ),
+            classes=dict(
+                mapping.classes,
+            ),
+            is_ssot=mapping.is_ssot,
+            languages=mapping.languages,
+        )

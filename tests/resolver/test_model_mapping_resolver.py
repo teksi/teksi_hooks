@@ -128,7 +128,7 @@ def test_model_mapping_resolver_uses_default_identity(
 ) -> None:
     identity = resolved_mapping.defaults.identity
 
-    assert identity.source_attribute == "t_ili_tid"
+    assert identity.source_attribute == "obj_id"
     assert identity.canonical_attribute == "obj_id"
 
 
@@ -145,7 +145,7 @@ def test_model_mapping_resolver_adds_class_identity(
 
     identity = cls.identities["wastewater_structure"]
 
-    assert identity.source_attribute == "t_ili_tid"
+    assert identity.source_attribute == "obj_id"
     assert identity.canonical_attribute == "obj_id"
 
 
@@ -276,7 +276,7 @@ def test_model_mapping_resolver_supports_empty_dictionary() -> None:
 
     assert mapping.classes == {}
     assert mapping.is_ssot is True
-    assert mapping.defaults.identity.source_attribute == "t_ili_tid"
+    assert mapping.defaults.identity.source_attribute == "obj_id"
     assert mapping.defaults.identity.canonical_attribute == "obj_id"
 
 
