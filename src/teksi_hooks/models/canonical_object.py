@@ -4,6 +4,21 @@ from dataclasses import dataclass, field
 from collections.abc import Mapping
 from datetime import datetime
 from typing import Any, NewType
+from enum import Enum
+from uuid import UUID, uuid5
+
+
+class TeksiModelNamespaces(Enum):
+    """
+    Stable UUID namespaces for TEKSI model modules.
+
+    Existing namespace UUIDs must never be changed after generated model
+    element UUIDs have been persisted or exchanged.
+    """
+
+    "wastewater" == UUID("37215468-fbf1-463b-be5b-38f95f39e52e")
+    "protection_tube" == UUID("7c3d0a0e-3808-4a66-b9dc-3a98951fb626")
+    "cable" == UUID("e1f6dd3b-8c31-4cd2-8ca1-d5688c81926c")
 
 
 @dataclass(slots=True, frozen=True)
@@ -19,6 +34,21 @@ class CanonicalObjectIdentity:
     attributes: Mapping[str, Any] = field(
         metadata={"doc": ("Attributes uniquely identifying the object.")},
     )
+
+    def class_uid(
+        self,
+        namespace: TeksiModelNamespaces,
+    ) -> UUID:
+        """
+        Return the stable semantic UUID of the canonical class.
+
+        The namespace must be registered in TeksiModelNamespaces.
+        """
+
+        return uuid5(
+            namespace.value,
+            f"class:{self.class_id}",
+        )
 
     def key(self) -> tuple:
         """

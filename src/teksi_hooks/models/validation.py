@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any
 from collections.abc import Mapping
@@ -256,7 +256,7 @@ class ChangeClassificationMetadata:
     )
 
     classified_at: datetime = field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(UTC),
         metadata={"doc": ("UTC timestamp at which the change was classified.")},
     )
 

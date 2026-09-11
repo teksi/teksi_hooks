@@ -11,7 +11,6 @@ from teksi_hooks.models.rights import (
     ResolvedRights,
 )
 from teksi_hooks.models.provider import Provider, ResolvedProvider
-from teksi_hooks.models.mapping import ModelMapping
 from teksi_hooks.models.validation import ValidationDefinition
 
 from teksi_hooks.parser.provider_rights_parser import ProviderRightsParser
@@ -38,6 +37,8 @@ from teksi_hooks.resolver.provider_resolver import ProviderResolver
 from teksi_hooks.evaluators.rights import RightsEvaluator
 
 DATA_DIR = Path(__file__).parent / "parser/data"
+
+MAPPING_PATH = DATA_DIR / "explicit_mapping.yaml"
 
 
 @pytest.fixture
@@ -85,13 +86,6 @@ def resolved_rights(
     return RightsResolver().resolve(
         rights_definition,
         validation_definition,
-    )
-
-
-@pytest.fixture
-def agxx_mapping() -> ModelMapping:
-    return ModelMappingParser().parse_file(
-        DATA_DIR / "agxx_mapping_minimal.yaml",
     )
 
 
@@ -151,4 +145,38 @@ def ewkb_from_wkt(
         geometry,
         hex=False,
         include_srid=True,
+    )
+
+
+@pytest.fixture
+def parser() -> ModelMappingParser:
+    return ModelMappingParser()
+
+
+@pytest.fixture
+def mappings(
+    parser: ModelMappingParser,
+):
+    return parser.parse_models_file(
+        MAPPING_PATH,
+    )
+
+
+@pytest.fixture
+def agxx_mapping(
+    parser: ModelMappingParser,
+):
+    return parser.parse_file(
+        MAPPING_PATH,
+        model_id="agxx",
+    )
+
+
+@pytest.fixture
+def sia405_mapping(
+    parser: ModelMappingParser,
+):
+    return parser.parse_file(
+        MAPPING_PATH,
+        model_id="sia405_abwasser",
     )

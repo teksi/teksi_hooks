@@ -98,5 +98,10 @@ class DiffSnapshot:
 
 @dataclass(slots=True, frozen=True)
 class SnapshotValidationFinding:
-    identity: CanonicalObjectIdentity
-    state: SnapshotState
+    identity: CanonicalObjectIdentity = field(
+        metadata={"doc": ("Canonical identity of the referenced object.")},
+    )
+
+    state: SnapshotState = field(
+        metadata={"doc": ("Snapshot state (enumeration)")},
+    )
