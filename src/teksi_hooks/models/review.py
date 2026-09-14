@@ -10,6 +10,8 @@ from uuid import UUID
 from .persistence import (
     PersistenceResult,
 )
+from .effects import EffectDocument
+from .validation import Change, ClassifiedChanges, ValidationFinding
 
 
 @dataclass(slots=True)
@@ -314,4 +316,74 @@ class DiffSchemaWriteResult:
                 "canonical class tables. The metadata row is not included."
             )
         },
+    )
+
+
+@dataclass(slots=True)
+class ChangeCreationResult:
+    """
+    Result of a change-creation workflow.
+
+    The result exposes intermediate products for diagnostics, tests and
+    subsequent review or persistence workflows.
+    """
+
+    job_id: str | None = field(
+        metadata={
+            "doc": (
+                "Database-generated identifier of the inserted review-job metadata row."
+            )
+        },
+    )
+
+    import_model: str | None = field(
+        metadata={"doc": ("Name of the import model.")},
+    )
+
+    incremental_import_model: str | None = field(
+        default=None,
+        metadata={"doc": ("Name of the incremental import model.")},
+    )
+
+    created_models: list[str] = field(
+        default_factory=list,
+        metadata={"doc": ("List of created models.")},
+    )
+
+    incremental_created_models: list[str] = field(
+        default_factory=list,
+        metadata={"doc": ("List of created incremental models.")},
+    )
+
+    effect_document: EffectDocument | None = field(
+        default=None,
+        metadata={"doc": ("Effect Document of the corresponding workflow.")},
+    )
+
+    changes: list[Change] = field(
+        default_factory=list,
+        metadata={"doc": ("Changes of the corresponding workflow.")},
+    )
+
+    validation_findings: list[ValidationFinding] = field(
+        default_factory=list,
+        metadata={"doc": ("Validation findings of the corresponding workflow.")},
+    )
+
+    classified_changes: ClassifiedChanges | None = field(
+        default_factory=None,
+        metadata={"doc": ("Classified Changes of the corresponding workflow.")},
+    )
+
+    features_by_class: dict[
+        str,
+        list[ReviewFeature],
+    ] = field(
+        default_factory=dict,
+        metadata={"doc": ("List of review features by class.")},
+    )
+
+    diff_schema_result: DiffSchemaWriteResult | None = field(
+        default_factory=None,
+        metadata={"doc": ("Result of the Diff Schema Writer.")},
     )

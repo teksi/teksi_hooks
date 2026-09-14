@@ -24,6 +24,15 @@ class DiffJobMode(StrEnum):
     REFRESH = "refresh"
 
 
+class DiffSourceRole(StrEnum):
+    """
+    Define the role of one source within a diff workflow.
+    """
+
+    BASE = "base"
+    INCREMENTAL = "incremental"
+
+
 @dataclass(
     frozen=True,
     slots=True,
