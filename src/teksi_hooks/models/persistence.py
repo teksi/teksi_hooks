@@ -23,6 +23,7 @@ class DiffJobMode(StrEnum):
     REPLACE = "replace"
     REFRESH = "refresh"
 
+
 class DiffSourceRole(StrEnum):
     """
     Define the role of one source within a diff workflow.
@@ -30,6 +31,7 @@ class DiffSourceRole(StrEnum):
 
     BASE = "base"
     INCREMENTAL = "incremental"
+
 
 @dataclass(
     frozen=True,

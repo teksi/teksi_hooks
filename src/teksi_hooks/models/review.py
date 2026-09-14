@@ -337,74 +337,42 @@ class ChangeCreationResult:
     )
 
     import_model: str | None = field(
-        metadata={
-            "doc": (
-                "Name of the import model."
-            )
-        },
+        metadata={"doc": ("Name of the import model.")},
     )
 
     incremental_import_model: str | None = field(
         default=None,
-        metadata={
-            "doc": (
-                "Name of the incremental import model."
-            )
-        },
+        metadata={"doc": ("Name of the incremental import model.")},
     )
 
     created_models: list[str] = field(
         default_factory=list,
-        metadata={
-            "doc": (
-                "List of created models."
-            )
-        },
+        metadata={"doc": ("List of created models.")},
     )
 
     incremental_created_models: list[str] = field(
         default_factory=list,
-        metadata={
-            "doc": (
-                "List of created incremental models."
-            )
-        },
+        metadata={"doc": ("List of created incremental models.")},
     )
 
     effect_document: EffectDocument | None = field(
         default=None,
-        metadata={
-            "doc": (
-                "Effect Document of the corresponding workflow."
-            )
-        },
+        metadata={"doc": ("Effect Document of the corresponding workflow.")},
     )
 
     changes: list[Change] = field(
         default_factory=list,
-        metadata={
-            "doc": (
-                "Changes of the corresponding workflow."
-            )
-        },
+        metadata={"doc": ("Changes of the corresponding workflow.")},
     )
 
     validation_findings: list[ValidationFinding] = field(
         default_factory=list,
-        metadata={
-            "doc": (
-                "Validation findings of the corresponding workflow."
-            )
-        },
+        metadata={"doc": ("Validation findings of the corresponding workflow.")},
     )
 
     classified_changes: ClassifiedChanges | None = field(
         default_factory=None,
-        metadata={
-            "doc": (
-                "Classified Changes of the corresponding workflow."
-            )
-        },
+        metadata={"doc": ("Classified Changes of the corresponding workflow.")},
     )
 
     features_by_class: dict[
@@ -412,18 +380,10 @@ class ChangeCreationResult:
         list[ReviewFeature],
     ] = field(
         default_factory=dict,
-        metadata={
-            "doc": (
-                "List of review features by class."
-            )
-        },
+        metadata={"doc": ("List of review features by class.")},
     )
 
-    diff_schema_result: DiffSchemaWriteResult | None =  field(
+    diff_schema_result: DiffSchemaWriteResult | None = field(
         default_factory=None,
-        metadata={
-            "doc": (
-                "Result of the Diff Schema Writer."
-            )
-        },
+        metadata={"doc": ("Result of the Diff Schema Writer.")},
     )

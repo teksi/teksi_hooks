@@ -1,4 +1,3 @@
-
 from typing import Protocol
 
 from ..models.canonical_object import (
@@ -10,6 +9,7 @@ from ..models.effects import (
 from ..capabilities.review import (
     ChangeObjectProvider,
 )
+
 
 class QuarantineEffectProjector(Protocol):
     """
@@ -29,6 +29,7 @@ class QuarantineEffectProjector(Protocol):
         """
         Project one populated quarantine schema into canonical effects.
         """
+
 
 class ChangeObjectProviderFactory(Protocol):
     """
