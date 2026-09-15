@@ -10,6 +10,10 @@ from ..models.validation import (
 
 from ..models.review import ReviewFeature
 
+from teksi_hooks.models.review import (
+    PreparedSource,
+)
+
 
 class ChangeObjectProvider(Protocol):
     """
@@ -62,3 +66,46 @@ class ReviewArtifactWriter(Protocol):
         """
         Write layers to the given path.
         """
+
+
+class SourcePreparer(Protocol):
+    def prepare_source(
+        self,
+        *,
+        job_id: str,
+        source: PreparedSource,
+    ) -> None:
+        """
+        Stage one prepared base source for a diff workflow.
+
+        A previously prepared source for the same job identifier is replaced.
+        No review job or review feature is persisted by this operation.
+        """
+        ...
+
+    def prepared_source(
+        self,
+        *,
+        job_id: str,
+    ) -> PreparedSource:
+        """
+        Return the prepared base source for a diff workflow.
+
+        Raises
+        ------
+        KeyError
+            If no prepared source exists for the job identifier.
+        """
+        ...
+
+    def clear_prepared_source(
+        self,
+        *,
+        job_id: str,
+    ) -> None:
+        """
+        Remove the prepared source for a completed diff workflow.
+
+        Missing prepared sources are ignored so cleanup remains idempotent.
+        """
+        ...

@@ -387,3 +387,64 @@ class ChangeCreationResult:
         default_factory=None,
         metadata={"doc": ("Result of the Diff Schema Writer.")},
     )
+
+
+@dataclass(
+    slots=True,
+    frozen=True,
+)
+class PreparedSource:
+    """
+    Validated canonical projection staged for a multi-source diff workflow.
+
+    A prepared source is not a persisted review job. It holds the projected
+    effects of one source delivery until all required sources have been
+    prepared and the final pending review job can be created.
+    """
+
+    source_model: str = field(
+        metadata={
+            "doc": (
+                "Exact source-model identifier used to import and project "
+                "the source delivery."
+            )
+        },
+    )
+
+    created_models: tuple[
+        str,
+        ...,
+    ] = field(
+        metadata={
+            "doc": (
+                "Concrete INTERLIS model identifiers used to create the "
+                "quarantine schema. Models are ordered dependency-first, "
+                "with the primary source model appearing last."
+            )
+        },
+    )
+
+    effect_document: EffectDocument = field(
+        metadata={
+            "doc": (
+                "Canonical effect document projected from the validated "
+                "source quarantine. A later incremental source may override "
+                "matching effects before the pending review job is created."
+            )
+        },
+    )
+
+    metadata: Mapping[
+        str,
+        Any,
+    ] = field(
+        default_factory=dict,
+        metadata={
+            "doc": (
+                "Workflow and source-specific metadata associated with the "
+                "prepared projection. This may include the source role, XTF "
+                "path, quarantine schema, semantic model group, model "
+                "language, provider context and mapping provenance."
+            )
+        },
+    )
