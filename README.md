@@ -239,4 +239,4 @@ Define extension points supplied by the hosting application.
 
 ## License
 
-GPL-2.0-or-later
+GPL-3.0-or-later

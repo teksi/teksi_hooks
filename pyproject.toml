@@ -1,5 +1,7 @@
 [build-system]
-requires = ["setuptools>=61"]
+requires = [
+    "setuptools>=77",
+]
 build-backend = "setuptools.build_meta"
 
 
@@ -8,14 +10,26 @@ name = "teksi-hooks"
 version = "0.1.0"
 description = "Capability-based hook framework for the TEKSI ecosystem"
 readme = "README.md"
-license = { text = "GPL-2.0-only" }
-authors = [
-    { name = "TEKSI" }
-]
 requires-python = ">=3.11"
+license = "GPL-3.0-only"
+
+authors = [
+    { name = "TEKSI" },
+]
+
 dependencies = [
     "psycopg>=3.1",
-    "pyyaml",
+    "PyYAML",
+]
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
 
 
@@ -26,13 +40,23 @@ docs = [
 ]
 
 dev = [
+    "build",
     "pytest>=8.0",
     "shapely>=2.0,<3",
+    "twine",
 ]
+
+
+[project.urls]
+Homepage = "https://github.com/teksi/teksi-hooks"
+Repository = "https://github.com/teksi/teksi-hooks"
+Issues = "https://github.com/teksi/teksi-hooks/issues"
+Documentation = "https://teksi.github.io/teksi-hooks/"
 
 
 [tool.setuptools]
 package-dir = { "" = "src" }
+include-package-data = true
 
 
 [tool.setuptools.packages.find]
