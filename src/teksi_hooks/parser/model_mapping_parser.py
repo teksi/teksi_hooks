@@ -14,8 +14,8 @@ from ..models.mapping import (
     AttributeMapping,
     ClassMapping,
     FunctionMapping,
-    ModelMapping,
     MappingDefaults,
+    ModelMapping,
     RelationMapping,
     ValueListMapping,
 )

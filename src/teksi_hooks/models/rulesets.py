@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 
-from .privilege import PrivilegeId
 from .conditions import Condition
+from .privilege import PrivilegeId
 
 
 class Rule:
@@ -12,8 +12,6 @@ class Rule:
     They are evaluated by the rights engine against the current provider,
     object state, operation type and optional conditions.
     """
-
-    pass
 
 
 @dataclass(slots=True, frozen=True)

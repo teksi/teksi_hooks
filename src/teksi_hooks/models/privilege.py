@@ -1,8 +1,9 @@
 from __future__ import annotations
-from dataclasses import dataclass, field
-from collections.abc import Mapping
-from .canonical_object import LanguageCode
 
+from collections.abc import Mapping
+from dataclasses import dataclass, field
+
+from .canonical_object import LanguageCode
 
 PrivilegeId = str
 ALL_PRIVILEGES: PrivilegeId = "__all__"

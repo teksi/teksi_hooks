@@ -1,7 +1,12 @@
+from datetime import UTC, datetime
+
 import pytest
+
+from teksi_hooks.capabilities.relation_lookup import InMemoryRelationLookupCapability
+from teksi_hooks.exceptions import SnapshotValidationError
 from teksi_hooks.models.canonical_object import (
-    CanonicalObjectIdentity,
     CanonicalObject,
+    CanonicalObjectIdentity,
 )
 from teksi_hooks.models.effects import (
     EffectDocument,
@@ -11,10 +16,6 @@ from teksi_hooks.models.effects import (
 from teksi_hooks.services.diff_snapshot_builder import (
     DiffSnapshotBuilder,
 )
-from teksi_hooks.capabilities.relation_lookup import InMemoryRelationLookupCapability
-from teksi_hooks.exceptions import SnapshotValidationError
-
-from datetime import UTC, datetime
 
 DEFAULT_LAST_MODIFICATION = datetime(
     2026,

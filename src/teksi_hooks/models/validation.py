@@ -1,15 +1,15 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any
-from collections.abc import Mapping
 
+from ..exceptions import Finding, Severity
+from .canonical_object import CanonicalObjectIdentity
 from .privilege import PrivilegeId
 from .rulesets import StateTransitionRule
-from ..exceptions import Severity, Finding
-from .canonical_object import CanonicalObjectIdentity
 
 
 @dataclass(slots=True, frozen=True)

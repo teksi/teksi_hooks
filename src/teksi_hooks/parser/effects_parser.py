@@ -1,23 +1,20 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-import json
-
+from ..evaluators.effects import EffectDocumentValidator
+from ..models.canonical_object import CanonicalObjectIdentity
 from ..models.effects import (
+    Effect,
     EffectDocument,
     EffectSource,
-    Effect,
-    UpdateAttributeEffect,
     EnforceExistsEffect,
     EnforceNotExistsEffect,
+    UpdateAttributeEffect,
 )
-
-from ..models.canonical_object import CanonicalObjectIdentity
-
-from ..evaluators.effects import EffectDocumentValidator
 
 
 @dataclass(slots=True)

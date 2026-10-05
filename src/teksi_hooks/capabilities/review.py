@@ -1,17 +1,16 @@
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Protocol
-from collections.abc import Mapping, Sequence
-
-from ..models.validation import (
-    Change,
-)
-
-from ..models.review import ReviewFeature
 
 from teksi_hooks.models.review import (
     PreparedSource,
+)
+
+from ..models.review import ReviewFeature
+from ..models.validation import (
+    Change,
 )
 
 

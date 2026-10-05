@@ -1,7 +1,7 @@
 import abc
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from collections.abc import Sequence
 
 
 @dataclass(slots=True, frozen=True)

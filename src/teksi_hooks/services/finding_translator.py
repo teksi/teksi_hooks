@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from collections.abc import Mapping
+from dataclasses import dataclass, field
 from typing import Protocol
 
 from ..exceptions import Finding
-
 
 FINDING_MESSAGE_TEMPLATES: Mapping[
     str,

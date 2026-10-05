@@ -6,13 +6,12 @@ from typing import Any
 
 import yaml
 
+from ..exceptions import TeksiHookError
 from ..models.oid import Oid
-
 from ..models.provider import (
     Provider,
     ProviderPermission,
 )
-from ..exceptions import TeksiHookError
 
 
 @dataclass(slots=True)

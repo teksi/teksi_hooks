@@ -1,4 +1,4 @@
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 
 from teksi_hooks.capabilities.relation_lookup import (
     InMemoryRelationLookupCapability,

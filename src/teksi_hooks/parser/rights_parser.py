@@ -6,25 +6,26 @@ from typing import Any
 
 import yaml
 
+from ..exceptions import Severity
 from ..models.conditions import (
-    Condition,
-    AnyOfCondition,
     AllOfCondition,
+    AnyOfCondition,
+    Condition,
     LocalCondition,
     RemoteCondition,
 )
 from ..models.privilege import (
+    ALL_PRIVILEGES,
     PrivilegeId,
     PrivilegeMetadata,
-    ALL_PRIVILEGES,
 )
 from ..models.rights import (
+    AttributeDefaultDefinition,
     AttributeDefinition,
     ClassDefinition,
     DefaultDefinitions,
     DerivedRights,
     RightsDefinition,
-    AttributeDefaultDefinition,
 )
 from ..models.rulesets import (
     CrudRules,
@@ -34,13 +35,11 @@ from ..models.rulesets import (
     Rule,
     StateTransitionRule,
 )
-
 from ..models.validation import (
     AttributeValidation,
-    TransitionValidation,
     ChangeOperation,
+    TransitionValidation,
 )
-from ..exceptions import Severity
 
 
 @dataclass(slots=True)

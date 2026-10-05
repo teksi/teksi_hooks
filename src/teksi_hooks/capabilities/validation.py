@@ -1,16 +1,16 @@
 from __future__ import annotations
-from dataclasses import dataclass, field
+
 from collections.abc import Callable
+from dataclasses import dataclass, field
 from datetime import datetime
 
-
+from ..exceptions import Severity
 from ..models.validation import (
-    ValidationContext,
-    ValidationFinding,
     AttributeValidation,
     ObjectValidation,
+    ValidationContext,
+    ValidationFinding,
 )
-from ..exceptions import Severity
 
 
 @dataclass(slots=True)

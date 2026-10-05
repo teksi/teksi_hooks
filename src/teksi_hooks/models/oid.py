@@ -1,9 +1,8 @@
 import re
-
 from abc import ABC
 from dataclasses import dataclass, field
-from typing import ClassVar
 from re import Pattern
+from typing import ClassVar
 
 from ..exceptions import ValidationError
 

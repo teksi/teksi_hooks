@@ -5,8 +5,8 @@ from datetime import datetime
 from enum import StrEnum
 from uuid import UUID, uuid4
 
-from .effects import Effect
 from .canonical_object import CanonicalObjectIdentity
+from .effects import Effect
 
 
 class SnapshotState(StrEnum):

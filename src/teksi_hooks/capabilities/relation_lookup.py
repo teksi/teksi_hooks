@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any, Protocol
-from collections.abc import Sequence
 
 from ..models.canonical_object import (
     CanonicalObject,

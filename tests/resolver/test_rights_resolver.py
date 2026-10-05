@@ -2,8 +2,8 @@ from teksi_hooks.models.rulesets import (
     InheritRule,
     OwnershipRule,
     PrivilegeRule,
+    ResolvedCrudRules,
 )
-from teksi_hooks.models.rulesets import ResolvedCrudRules
 
 
 def test_rights_resolver_resolves_classes(

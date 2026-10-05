@@ -1,10 +1,18 @@
 from __future__ import annotations
 
-
+from collections import defaultdict
 from dataclasses import dataclass, replace
 from typing import Any
-from collections import defaultdict
 
+from ..capabilities.effects import (
+    CanonicalObjectLookupCapability,
+    EffectEvaluationPolicy,
+)
+from ..exceptions import EffectValidationError, Severity
+from ..models.canonical_object import (
+    CanonicalObject,
+    CanonicalObjectIdentity,
+)
 from ..models.effects import (
     Effect,
     EffectDocument,
@@ -15,16 +23,6 @@ from ..models.effects import (
     UpdateAttributeEffect,
 )
 from ..models.validation import ValidationFinding
-from ..models.canonical_object import (
-    CanonicalObject,
-    CanonicalObjectIdentity,
-)
-from ..capabilities.effects import (
-    CanonicalObjectLookupCapability,
-    EffectEvaluationPolicy,
-)
-
-from ..exceptions import EffectValidationError, Severity
 
 DOCUMENT_MAX_VERSION = 1
 

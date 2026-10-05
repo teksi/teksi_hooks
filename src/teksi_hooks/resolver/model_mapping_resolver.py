@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from collections.abc import Mapping
+from dataclasses import dataclass
 
 from ..capabilities.mapping import (
     ImplicitModelMappingCapability,
@@ -12,8 +12,8 @@ from ..models.canonical_object import (
 from ..models.mapping import (
     AttributeMapping,
     ClassMapping,
-    ModelMapping,
     MappingDefaults,
+    ModelMapping,
 )
 
 

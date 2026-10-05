@@ -6,7 +6,6 @@ from teksi_hooks.parser.model_mapping_parser import (
     ModelMappingParser,
 )
 
-
 DATA_DIR = Path(__file__).parent / "data"
 MAPPING_PATH = DATA_DIR / "explicit_mapping.yaml"
 
