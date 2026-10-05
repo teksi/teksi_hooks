@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from ..capabilities.relation_lookup import RelationLookupCapability
+from ..exceptions import SnapshotValidationError
 from ..models.diff_snapshot import (
     DiffSnapshot,
     SnapshotMetadata,
     SnapshotObject,
 )
 from ..models.effects import EffectDocument
-from ..capabilities.relation_lookup import RelationLookupCapability
-from ..exceptions import SnapshotValidationError
 
 
 @dataclass(slots=True)

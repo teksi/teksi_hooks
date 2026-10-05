@@ -1,6 +1,6 @@
+from teksi_hooks.capabilities.privilege import ResolvedProviderCapability
 from teksi_hooks.models.oid import Standardoid
 from teksi_hooks.models.provider import ResolvedProvider
-from teksi_hooks.capabilities.privilege import ResolvedProviderCapability
 
 
 def test_provider_rights_parser_imports_all_providers(providers) -> None:

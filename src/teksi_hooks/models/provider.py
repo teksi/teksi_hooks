@@ -1,8 +1,7 @@
-from dataclasses import dataclass, field
 from collections.abc import Mapping
+from dataclasses import dataclass, field
 
 from .oid import Oid
-
 from .privilege import PrivilegeId
 
 

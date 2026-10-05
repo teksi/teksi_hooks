@@ -1,4 +1,5 @@
 import pytest
+
 from teksi_hooks.capabilities.rights import (
     RightsCapability,
 )

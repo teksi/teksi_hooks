@@ -1,12 +1,11 @@
 from dataclasses import dataclass
 
 from ..models.oid import Oid
-
+from ..models.privilege import PrivilegeId
 from ..models.provider import (
     Provider,
     ResolvedProvider,
 )
-from ..models.privilege import PrivilegeId
 
 
 @dataclass(slots=True)

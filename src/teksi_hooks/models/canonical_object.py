@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from collections.abc import Mapping
+from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, NewType
 from enum import Enum
+from typing import Any, NewType
 from uuid import UUID, uuid5
 
 

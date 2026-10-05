@@ -1,9 +1,9 @@
+from teksi_hooks.models.conditions import LocalCondition
 from teksi_hooks.models.rulesets import (
     InheritRule,
     OwnershipRule,
     PrivilegeRule,
 )
-from teksi_hooks.models.conditions import LocalCondition
 from teksi_hooks.parser.rights_parser import RightsParser
 
 

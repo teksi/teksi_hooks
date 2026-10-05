@@ -1,7 +1,5 @@
 from dataclasses import replace
 
-from teksi_hooks.models.oid import Standardoid
-
 from teksi_hooks.capabilities.conditions import ConditionsCapability
 from teksi_hooks.capabilities.privilege import ResolvedProviderCapability
 from teksi_hooks.capabilities.rights import (
@@ -13,6 +11,7 @@ from teksi_hooks.evaluators.rights import (
     RightsEvaluationContext,
     RightsEvaluator,
 )
+from teksi_hooks.models.oid import Standardoid
 from teksi_hooks.models.rulesets import (
     OwnershipRule,
     PrivilegeRule,

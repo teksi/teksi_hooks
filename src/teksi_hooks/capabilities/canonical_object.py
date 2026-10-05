@@ -7,8 +7,8 @@ from ..models.canonical_object import (
     CanonicalAttributeMetadata,
     CanonicalClassMetadata,
     CanonicalModelMetadata,
-    CanonicalValueMetadata,
     CanonicalObjectIdentity,
+    CanonicalValueMetadata,
 )
 
 

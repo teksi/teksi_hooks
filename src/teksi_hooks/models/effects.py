@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, UTC
-from typing import Any
+from datetime import UTC, datetime
 from enum import StrEnum
+from typing import Any
 
 from .canonical_object import CanonicalObjectIdentity
 from .validation import ValidationFinding

@@ -1,16 +1,15 @@
 from __future__ import annotations
 
-
-from dataclasses import dataclass, field
-from typing import Any
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass, field
 from enum import StrEnum
+from typing import Any
 from uuid import UUID
 
+from .effects import EffectDocument
 from .persistence import (
     PersistenceResult,
 )
-from .effects import EffectDocument
 from .validation import Change, ClassifiedChanges, ValidationFinding
 
 

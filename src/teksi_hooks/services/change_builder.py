@@ -8,9 +8,9 @@ from ..models.canonical_object import (
 )
 from ..models.effects import (
     Effect,
-    UpdateAttributeEffect,
     EnforceExistsEffect,
     EnforceNotExistsEffect,
+    UpdateAttributeEffect,
 )
 from ..models.validation import (
     Change,

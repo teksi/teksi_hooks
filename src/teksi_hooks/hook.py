@@ -9,11 +9,10 @@ import sys
 import time
 import uuid
 from pathlib import Path
-from typing import Any, TypeVar
 from types import ModuleType
+from typing import Any, TypeVar
 
 from .exceptions import TeksiHookError
-
 
 T = TypeVar("T")
 logger = logging.getLogger(__name__)

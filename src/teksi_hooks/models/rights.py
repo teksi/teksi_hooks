@@ -1,16 +1,16 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from collections.abc import Mapping
+from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
-from .privilege import PrivilegeId, PrivilegeMetadata
-from .validation import AttributeValidation, TransitionValidation, ObjectValidation
-from .rulesets import CrudRules, ResolvedCrudRules, StateTransitionRule
-from .canonical_object import CanonicalObjectIdentity
-from pathlib import Path
-from .oid import Oid
 from ..exceptions import Finding
+from .canonical_object import CanonicalObjectIdentity
+from .oid import Oid
+from .privilege import PrivilegeId, PrivilegeMetadata
+from .rulesets import CrudRules, ResolvedCrudRules, StateTransitionRule
+from .validation import AttributeValidation, ObjectValidation, TransitionValidation
 
 
 @dataclass(slots=True)

@@ -1,40 +1,32 @@
 from pathlib import Path
+
 import pytest
-
-from shapely import wkt
-from shapely import set_srid
-from shapely import to_wkb
-
-from teksi_hooks.models.oid import Standardoid
-from teksi_hooks.models.rights import (
-    RightsDefinition,
-    ResolvedRights,
-)
-from teksi_hooks.models.provider import Provider, ResolvedProvider
-from teksi_hooks.models.validation import ValidationDefinition
-
-from teksi_hooks.parser.provider_rights_parser import ProviderRightsParser
-from teksi_hooks.parser.rights_parser import RightsParser
-from teksi_hooks.parser.model_mapping_parser import ModelMappingParser
-from teksi_hooks.parser.validation_parser import ValidationParser
-
+from shapely import set_srid, to_wkb, wkt
 
 from teksi_hooks.capabilities.conditions import ConditionsCapability
+from teksi_hooks.capabilities.privilege import ResolvedProviderCapability
 from teksi_hooks.capabilities.rights import (
-    RightsCapability,
     DerivedRightsCapability,
+    RightsCapability,
     SubclassRightsCapability,
 )
-from teksi_hooks.capabilities.privilege import ResolvedProviderCapability
 from teksi_hooks.capabilities.validation import (
     ValidationRegistry,
 )
-
-from teksi_hooks.resolver.rights_resolver import RightsResolver
-from teksi_hooks.resolver.provider_resolver import ProviderResolver
-
-
 from teksi_hooks.evaluators.rights import RightsEvaluator
+from teksi_hooks.models.oid import Standardoid
+from teksi_hooks.models.provider import Provider, ResolvedProvider
+from teksi_hooks.models.rights import (
+    ResolvedRights,
+    RightsDefinition,
+)
+from teksi_hooks.models.validation import ValidationDefinition
+from teksi_hooks.parser.model_mapping_parser import ModelMappingParser
+from teksi_hooks.parser.provider_rights_parser import ProviderRightsParser
+from teksi_hooks.parser.rights_parser import RightsParser
+from teksi_hooks.parser.validation_parser import ValidationParser
+from teksi_hooks.resolver.provider_resolver import ProviderResolver
+from teksi_hooks.resolver.rights_resolver import RightsResolver
 
 DATA_DIR = Path(__file__).parent / "parser/data"
 

@@ -1,15 +1,15 @@
 import pytest
-from teksi_hooks.models.effects import (
-    UpdateAttributeEffect,
-    EnforceExistsEffect,
-    EnforceNotExistsEffect,
-)
-from teksi_hooks.models.canonical_object import CanonicalObjectIdentity
-from teksi_hooks.parser.effects_parser import EffectParser
 
 from teksi_hooks.exceptions import (
     EffectValidationError,
 )
+from teksi_hooks.models.canonical_object import CanonicalObjectIdentity
+from teksi_hooks.models.effects import (
+    EnforceExistsEffect,
+    EnforceNotExistsEffect,
+    UpdateAttributeEffect,
+)
+from teksi_hooks.parser.effects_parser import EffectParser
 
 
 def test_parse_update_attribute_effect() -> None:

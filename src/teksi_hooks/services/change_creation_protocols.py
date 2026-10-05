@@ -1,13 +1,13 @@
 from typing import Protocol
 
+from ..capabilities.review import (
+    ChangeObjectProvider,
+)
 from ..models.canonical_object import (
     CanonicalModelMetadata,
 )
 from ..models.effects import (
     EffectDocument,
-)
-from ..capabilities.review import (
-    ChangeObjectProvider,
 )
 
 

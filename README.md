@@ -45,7 +45,6 @@ from teksi_hooks.hook import (
 
 
 class Hook(HookBase):
-
     required_capabilities = frozenset()
 
     @property

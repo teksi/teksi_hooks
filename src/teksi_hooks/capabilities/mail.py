@@ -1,9 +1,9 @@
-from typing import Protocol
 import smtplib
 from email.message import EmailMessage
+from typing import Protocol
 
-from ..models.mail import Mail, SmtpConfiguration
 from ..exceptions import TeksiHookError
+from ..models.mail import Mail, SmtpConfiguration
 
 
 class MailCapability(Protocol):

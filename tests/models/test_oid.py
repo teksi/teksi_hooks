@@ -1,7 +1,8 @@
-import pytest
-from typing import ClassVar
-from re import Pattern
 import re
+from re import Pattern
+from typing import ClassVar
+
+import pytest
 
 from teksi_hooks.exceptions import TeksiHookError
 from teksi_hooks.models.oid import Oid, Standardoid

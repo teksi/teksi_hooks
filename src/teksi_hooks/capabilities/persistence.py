@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from typing import Protocol
 
+from ..models.diff_snapshot import (
+    DiffSnapshot,
+)
 from ..models.persistence import (
     ChangePersistenceDocument,
     PersistenceResult,
-)
-from ..models.diff_snapshot import (
-    DiffSnapshot,
 )
 
 

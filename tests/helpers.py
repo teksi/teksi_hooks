@@ -1,6 +1,4 @@
-from shapely import wkt
-from shapely import set_srid
-from shapely import to_wkb
+from shapely import set_srid, to_wkb, wkt
 
 
 def ewkb_from_wkt(

@@ -1,17 +1,17 @@
 from collections import deque
-from dataclasses import dataclass
 from collections.abc import Mapping
+from dataclasses import dataclass
 from typing import Any
 
 from ..capabilities.rights import RightsCapability
 from ..capabilities.validation import ValidationRegistry
+from ..exceptions import Severity
 from ..models.validation import (
-    ValidationContext,
-    ValidationFinding,
     Change,
     ChangeOperation,
+    ValidationContext,
+    ValidationFinding,
 )
-from ..exceptions import Severity
 
 
 @dataclass(slots=True)

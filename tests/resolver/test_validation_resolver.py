@@ -1,7 +1,6 @@
 from teksi_hooks.models.rights import AttributeDefinition
 from teksi_hooks.models.rulesets import StateTransitionRule
 from teksi_hooks.models.validation import TransitionValidation
-
 from teksi_hooks.resolver.validation_resolver import (
     ValidationResolver,
 )

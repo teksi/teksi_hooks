@@ -1,26 +1,25 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass, replace
 
+from ..evaluators.rights import (
+    RightsEvaluationContext,
+    RightsEvaluator,
+)
 from ..models.rights import (
     PermissionFinding,
 )
 from ..models.validation import (
-    Severity,
-    ValidationFinding,
+    Change,
     ChangeClassification,
     ChangeClassificationMetadata,
+    ChangeOperation,
     ClassifiedChange,
     ClassifiedChanges,
-    Change,
-    ChangeOperation,
+    Severity,
+    ValidationFinding,
 )
-from ..evaluators.rights import (
-    RightsEvaluator,
-    RightsEvaluationContext,
-)
-
 
 ChangeKey = tuple[
     str,
