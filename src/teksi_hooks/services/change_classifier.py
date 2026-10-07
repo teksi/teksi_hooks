@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from collections.abc import Mapping, Sequence
 
 from ..models.rights import (
@@ -18,6 +18,7 @@ from ..models.validation import (
 )
 from ..evaluators.rights import (
     RightsEvaluator,
+    RightsEvaluationBaseContext,
     RightsEvaluationContext,
 )
 
@@ -56,7 +57,7 @@ class ChangeClassifier:
     def classify(
         self,
         changes: Sequence[Change,],
-        context: RightsEvaluationContext,
+        context: RightsEvaluationBaseContext,
         validation_findings_by_change_key: Mapping[
             ChangeKey,
             tuple[ValidationFinding, ...],
@@ -77,8 +78,9 @@ class ChangeClassifier:
             Changes to classify.
 
         context:
-            Base rights evaluation context. Operation, old_values and
-            new_values are replaced per change before rights evaluation.
+            Workflow-level rights evaluation context. A complete
+            RightsEvaluationContext is created for each change using the
+            change's operation, old values, and new values.
 
         validation_findings_by_change_key:
             Optional validation findings keyed by
@@ -117,7 +119,7 @@ class ChangeClassifier:
     def _classify_change(
         self,
         change: Change,
-        base_context: RightsEvaluationContext,
+        base_context: RightsEvaluationBaseContext,
         validation_findings: tuple[ValidationFinding, ...],
     ) -> ClassifiedChange:
         context = self._context_for_change(
@@ -193,18 +195,24 @@ class ChangeClassifier:
 
     def _context_for_change(
         self,
-        base_context: RightsEvaluationContext,
+        base_context: RightsEvaluationBaseContext,
         change: Change,
     ) -> RightsEvaluationContext:
         """
-        Create a rights evaluation context for one change.
+        Create a complete rights context for one row-level change.
+
+        The operation belongs to the Change because it describes whether the
+        canonical object is inserted, updated, or deleted. Attribute transitions
+        to or from NULL remain UPDATE operations.
         """
 
-        return replace(
-            base_context,
+        return RightsEvaluationContext(
+            dataowner_oid=base_context.dataowner_oid,
+            provider_oid=base_context.provider_oid,
             operation=change.operation,
             old_values=change.old_values,
             new_values=change.new_values,
+            context_values=base_context.context_values,
         )
 
     def _is_permitted(
@@ -212,6 +220,13 @@ class ChangeClassifier:
         change: Change,
         context: RightsEvaluationContext,
     ) -> bool:
+        if context.operation != change.operation:
+            raise RuntimeError(
+                "Rights evaluation operation does not match the "
+                "classified change operation: "
+                f"{context.operation!r} != {change.operation!r}."
+            )
+
         if change.operation == ChangeOperation.INSERT:
             return self.rights_evaluator.can_create(
                 change.table_name,
