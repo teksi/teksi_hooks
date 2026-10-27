@@ -6,11 +6,116 @@ from enum import StrEnum
 from typing import Any
 from uuid import UUID
 
+from .canonical_object import CanonicalGeometryFamily
 from .effects import EffectDocument
 from .persistence import (
     PersistenceResult,
 )
 from .validation import Change, ClassifiedChanges, ValidationFinding
+
+
+@dataclass(
+    slots=True,
+    frozen=True,
+)
+class ReviewGeometry:
+    """
+    Geometry transported between review creation and review persistence.
+
+    The geometry is represented as Extended Well-Known Binary so its exact
+    PostGIS-compatible representation can be transferred without converting
+    it through WKT, OGR, QGIS, Shapely, or another geometry model.
+
+    EWKB may preserve:
+
+    - the exact geometry subtype;
+    - curved geometry types;
+    - coordinate dimensions such as XY and XYZ;
+    - the spatial reference identifier;
+    - coordinate values and geometry structure.
+
+    ``family`` provides the broad geometry category required by review
+    writers that separate point, line, and polygon features into different
+    storage columns or layers.
+    """
+
+    ewkb: bytes = field(
+        metadata={
+            "doc": (
+                "Extended Well-Known Binary representation of the geometry. "
+                "The payload should include the spatial reference identifier "
+                "and preserve the original geometry subtype and coordinate "
+                "dimensions."
+            )
+        },
+    )
+
+    family: CanonicalGeometryFamily = field(
+        metadata={
+            "doc": (
+                "Broad geometry family used to select the corresponding "
+                "point, line, or polygon review storage."
+            )
+        },
+    )
+
+    def __post_init__(
+        self,
+    ) -> None:
+        """
+        Validate and normalize the immutable geometry transport value.
+        """
+
+        if isinstance(
+            self.ewkb,
+            (
+                bytearray,
+                memoryview,
+            ),
+        ):
+            object.__setattr__(
+                self,
+                "ewkb",
+                bytes(
+                    self.ewkb,
+                ),
+            )
+
+        if not isinstance(
+            self.ewkb,
+            bytes,
+        ):
+            raise TypeError(
+                f"ReviewGeometry.ewkb must be bytes, received {type(self.ewkb)!r}."
+            )
+
+        if not self.ewkb:
+            raise ValueError("ReviewGeometry.ewkb must not be empty.")
+
+        if not isinstance(
+            self.family,
+            CanonicalGeometryFamily,
+        ):
+            try:
+                normalized_family = CanonicalGeometryFamily(
+                    self.family,
+                )
+
+            except (
+                TypeError,
+                ValueError,
+            ) as exception:
+                raise ValueError(
+                    "ReviewGeometry.family must be one of "
+                    f"{tuple(item.value for item in CanonicalGeometryFamily)!r}; "
+                    f"received {self.family!r}."
+                ) from exception
+
+            object.__setattr__(
+                self,
+                "family",
+                normalized_family,
+            )
 
 
 @dataclass(slots=True)
@@ -52,7 +157,7 @@ class ReviewFeature:
 
     geometries: dict[
         str,
-        Any,
+        ReviewGeometry,
     ] = field(
         default_factory=dict,
         metadata={

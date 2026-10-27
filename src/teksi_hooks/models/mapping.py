@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+from typing import Any, Literal
 
 from .canonical_object import CanonicalIdentityMapping
 
@@ -64,6 +65,26 @@ class ValueListMapping:
         },
     )
 
+    ignored_values: list = field(
+        default_factory=list,
+        metadata={
+            "doc": (
+                "Optional list of values that are to be ignored on mapping."
+                " Defaults to an empty list`."
+            )
+        },
+    )
+
+    def ignores(
+        self,
+        value: Any,
+    ) -> bool:
+        """
+        Return whether one source-model value is intentionally ignored.
+        """
+
+        return value in self.ignored_values
+
 
 @dataclass(slots=True, frozen=True)
 class ForeignKeyMapping:
@@ -93,42 +114,136 @@ class ForeignKeyMapping:
     )
 
 
-@dataclass(slots=True, frozen=True)
-class FunctionMapping:
+@dataclass(
+    slots=True,
+    frozen=True,
+)
+class CanonicalViewMapping:
     """
-    Describe a database-backed mapping function.
+    Identify a read-only canonical comparison view.
 
-    Function mappings handle source classes whose canonical effects cannot
-    be represented by one-to-one attribute mappings.
-
-    The configured function receives values from the source row and returns
-    a complete canonical JSONB effect document. The result is authoritative
-    and must not be supplemented with declarative attribute mappings.
+    The view exposes the current canonical state using source-model
+    semantics. Effect projectors compare source rows against rows from this
+    view.
     """
 
     schema: str = field(
-        metadata={
-            "doc": (
-                "Database schema containing the mapping function. Example: `tww_app`."
-            )
-        },
+        metadata={"doc": ("Database schema containing the canonical comparison view.")},
     )
+
     name: str = field(
+        metadata={"doc": ("Database relation name of the canonical comparison view.")},
+    )
+
+    identity_attribute: str = field(
+        default="obj_id",
         metadata={
             "doc": (
-                "Database function name implementing the mapping. Example: "
-                "`fct_agxx_gepknoten_mapping_jsonb`."
+                "View attribute used to associate one canonical "
+                "comparison row with one source object."
             )
         },
     )
-    parameters: Mapping[str, str] = field(
+
+
+@dataclass(
+    slots=True,
+    frozen=True,
+)
+class CanonicalViewProjectionMapping:
+    """
+    Configure class-level effect projection against a canonical view.
+
+    The canonical view exposes the current live state using source-model
+    semantics. The configured projector compares a complete source class
+    against that state and produces canonical effect documents.
+    """
+
+    canonical_view: CanonicalViewMapping = field(
+        metadata={
+            "doc": ("Read-only canonical comparison view used by the effect projector.")
+        },
+    )
+
+    kind: Literal["canonical_view",] = field(
+        default="canonical_view",
+        metadata={
+            "doc": (
+                "Projection mechanism. Canonical-view projections compare "
+                "source rows with a read-only canonical comparison view."
+            )
+        },
+    )
+
+    references: Mapping[
+        str,
+        ProjectionReferenceMapping,
+    ] = field(
         default_factory=dict,
         metadata={
             "doc": (
-                "Function parameter mappings keyed by database function "
-                "parameter name. Values identify source-row expressions or "
-                "source-model attributes. The special value `$row` passes "
-                "the complete source row."
+                "Source-reference mappings keyed by runtime source attribute. "
+                "Each mapping describes how an internal source reference is "
+                "resolved to an external source identity."
+            )
+        },
+    )
+
+    value_lists: Mapping[
+        str,
+        ValueListMapping,
+    ] = field(
+        default_factory=dict,
+        metadata={
+            "doc": (
+                "Projection value-list lookups keyed by runtime source "
+                "attribute. These mappings resolve source-facing values but "
+                "do not determine canonical effect targets."
+            )
+        },
+    )
+
+
+@dataclass(
+    slots=True,
+    frozen=True,
+)
+class ProjectionReferenceMapping:
+    """
+    Describe one source-model reference required by a projection.
+
+    The mapping resolves an internal source reference, such as an ili2pg
+    ``t_id``, to the external identity of the referenced source object.
+
+    It does not identify a canonical target class or target attribute.
+    Canonical target disambiguation remains the responsibility of the
+    semantic effect projector.
+    """
+
+    source_class_id: str = field(
+        metadata={
+            "doc": (
+                "Logical source-model class referenced by the local source attribute."
+            )
+        },
+    )
+
+    identity_attribute: str = field(
+        default="t_ili_tid",
+        metadata={
+            "doc": (
+                "Attribute on the referenced source row containing its "
+                "external source-model identity."
+            )
+        },
+    )
+
+    discriminator: ProjectionReferenceDiscriminator | None = field(
+        default=None,
+        metadata={
+            "doc": (
+                "Optional discriminator used when several logical source "
+                "classes share one physical source-model relation."
             )
         },
     )
@@ -300,7 +415,7 @@ class ClassMapping:
     """
     Map one source-model class to the canonical internal model.
 
-    A class may use either a class-level function mapping or declarative
+    A class may use either a class-level projection mapping or declarative
     attribute mappings. Function-backed mappings return a complete JSONB
     effect document.
     """
@@ -310,7 +425,7 @@ class ClassMapping:
         metadata={
             "doc": (
                 "Optional primary canonical class identifier represented by "
-                "the source class. This may be omitted for function-backed "
+                "the source class. This may be omitted for projection-backed "
                 "or extension-only mappings."
             )
         },
@@ -370,26 +485,26 @@ class ClassMapping:
             )
         },
     )
-    function: FunctionMapping | None = field(
+    projection: CanonicalViewProjectionMapping | None = field(
         default=None,
         metadata={
             "doc": (
-                "Optional database-backed class projection function. The "
-                "function receives configured source-row values and returns "
-                "the complete canonical JSONB effect document."
+                "Class-level semantic effect projection. The "
+                "projection compares complete source-class data "
+                "against a read-only canonical view."
             )
         },
     )
 
     @property
-    def is_function_backed(
+    def is_projection_backed(
         self,
     ) -> bool:
         """
-        Return whether the class uses a database projection function.
+        Return whether the class uses a database projection.
         """
 
-        return self.function is not None
+        return self.projection is not None
 
     @property
     def is_attribute_backed(
@@ -502,5 +617,34 @@ class RelationContext:
                 "Resolved mapping for the source-model class represented by "
                 "the ORM relation."
             )
+        },
+    )
+
+
+@dataclass(
+    slots=True,
+    frozen=True,
+)
+class ProjectionReferenceDiscriminator:
+    """
+    Restrict a projection reference to one logical source type.
+
+    A discriminator is needed when several logical source classes share one
+    physical source-model relation. The attribute and value are interpreted
+    by the source-reference lookup capability and are not SQL fragments.
+    """
+
+    attribute: str = field(
+        metadata={
+            "doc": (
+                "Runtime attribute on the referenced source row containing "
+                "the logical source-type discriminator."
+            )
+        },
+    )
+
+    value: str = field(
+        metadata={
+            "doc": ("Required discriminator value on the referenced source row.")
         },
     )

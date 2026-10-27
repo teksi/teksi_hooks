@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Any, NewType
 from uuid import UUID, uuid5
 
@@ -57,6 +57,26 @@ class TeksiModelNamespaces(Enum):
                 return model
 
         raise ValueError(f"Unknown canonical model identifier: {identifier!r}.")
+
+
+class CanonicalGeometryFamily(
+    StrEnum,
+):
+    """
+    Broad geometry families supported by review artifacts.
+
+    The family describes the storage and rendering category, not the exact
+    geometry subtype. For example, ``LINESTRING``, ``CIRCULARSTRING``,
+    ``COMPOUNDCURVE``, and ``MULTICURVE`` as well as their counterparts
+    with Z or M values all belong to ``LINE``. Module-specific interpreters
+    may limit the allowed inputs by i.e. dropping M support.
+    """
+
+    POINT = "point"
+
+    LINE = "line"
+
+    POLYGON = "polygon"
 
 
 @dataclass(slots=True, frozen=True)
@@ -287,6 +307,132 @@ class CanonicalAttributeMetadata(CanonicalModelElementMetadata):
             )
         },
     )
+
+
+@dataclass(slots=True, frozen=True, kw_only=True)
+class CanonicalGeometryMetadata(
+    CanonicalAttributeMetadata,
+):
+    """
+    Canonical metadata for one physical geometry attribute.
+
+    The metadata describes the executable geometry column exposed by the
+    canonical model. Its identifier is the physical canonical attribute name,
+    such as ``area_geometry`` or ``progression_geometry``.
+
+    Semantic and localized metadata may originate from a canonical dictionary.
+    Physical geometry properties normally originate from database reflection
+    or the PostGIS ``geometry_columns`` metadata view.
+    """
+
+    geometry_type: str = field(
+        metadata={
+            "doc": (
+                "Declared geometry subtype, such as POINT, LINESTRING, "
+                "COMPOUNDCURVE, POLYGON, or CURVEPOLYGON. Coordinate "
+                "dimension is represented separately."
+            )
+        },
+    )
+
+    family: CanonicalGeometryFamily = field(
+        metadata={
+            "doc": (
+                "Broad point, line, or polygon family of the geometry. "
+                "The family is independent of the exact geometry subtype "
+                "and coordinate dimension."
+            )
+        },
+    )
+
+    coordinate_dimension: int = field(
+        metadata={
+            "doc": (
+                "Declared coordinate dimension reported by the canonical "
+                "spatial database metadata."
+            )
+        },
+    )
+
+    srid: int = field(
+        metadata={
+            "doc": (
+                "Spatial reference identifier declared for the canonical "
+                "geometry attribute."
+            )
+        },
+    )
+
+    def __post_init__(
+        self,
+    ) -> None:
+        """
+        Validate and normalize geometry metadata.
+        """
+
+        if (
+            not isinstance(
+                self.geometry_type,
+                str,
+            )
+            or not self.geometry_type.strip()
+        ):
+            raise ValueError("Canonical geometry type must be a non-empty string.")
+
+        object.__setattr__(
+            self,
+            "geometry_type",
+            self.geometry_type.strip().upper(),
+        )
+
+        if not isinstance(
+            self.family,
+            CanonicalGeometryFamily,
+        ):
+            try:
+                family = CanonicalGeometryFamily(
+                    self.family,
+                )
+
+            except (
+                TypeError,
+                ValueError,
+            ) as exception:
+                raise ValueError(
+                    f"Unsupported canonical geometry family {self.family!r}."
+                ) from exception
+
+            object.__setattr__(
+                self,
+                "family",
+                family,
+            )
+
+        if (
+            not isinstance(
+                self.coordinate_dimension,
+                int,
+            )
+            or self.coordinate_dimension <= 0
+        ):
+            raise ValueError(
+                "Canonical geometry coordinate dimension must be a positive integer."
+            )
+
+        if not isinstance(
+            self.srid,
+            int,
+        ):
+            raise TypeError("Canonical geometry SRID must be an integer.")
+
+        expected_datatype = f"geometry({self.geometry_type.lower()})"
+
+        if self.field_datatype is None:
+            object.__setattr__(
+                self,
+                "field_datatype",
+                expected_datatype,
+            )
 
 
 @dataclass(slots=True, frozen=True)

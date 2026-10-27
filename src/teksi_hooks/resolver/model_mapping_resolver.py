@@ -104,7 +104,7 @@ class ImplicitModelMappingResolver:
                 ili_class_name=ili_class_name,
             ),
             relations={},
-            function=None,
+            projection=None,
         )
 
     def _attributes_for_class(

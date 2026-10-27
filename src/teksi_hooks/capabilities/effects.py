@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Protocol
+from collections.abc import Mapping, Sequence
+from typing import Any, Protocol, runtime_checkable
 
 from ..models.canonical_object import (
     CanonicalObject,
@@ -12,6 +13,10 @@ from ..models.effects import (
     Effect,
     EffectDocument,
     EffectEvaluationResult,
+)
+from ..models.mapping import (
+    CanonicalViewMapping,
+    CanonicalViewProjectionMapping,
 )
 
 
@@ -52,6 +57,34 @@ class CanonicalObjectLookupCapability(
         """
 
         ...
+
+
+class CanonicalViewLookupCapability(
+    Protocol,
+):
+    """
+    Resolve read-only canonical comparison views.
+
+    Implementations expose ORM classes for querying current canonical state
+    using source-model semantics.
+    """
+
+
+def rows_by_identity(
+    self,
+    *,
+    session: Any,
+    view: CanonicalViewMapping,
+    identities: Sequence[str,],
+) -> Mapping[
+    str,
+    Any,
+]:
+    """
+    Return canonical-view rows indexed by configured view identity.
+
+    The result must contain at most one row per requested identity.
+    """
 
 
 class EffectEvaluationPolicy(
@@ -104,6 +137,43 @@ class EffectEvaluatorCapability(
         The result sequence must contain exactly one result for every effect
         in ``document.effects``. Each result must refer to the effect's
         zero-based index in that sequence.
+        """
+
+        ...
+
+
+@runtime_checkable
+class CanonicalViewEffectProjector(
+    Protocol,
+):
+    """
+    Project a complete source class against a canonical comparison view.
+
+    Implementations are expected to load canonical-view rows in batches and
+    return exactly one effect document for every supplied source row.
+
+    The supplied sessions are caller-owned. Implementations must not commit,
+    roll back, or close either session.
+    """
+
+    def project_effects(
+        self,
+        *,
+        source_model: str,
+        source_class_id: str,
+        source_rows: Sequence[Any,],
+        quarantine_session: Any,
+        live_session: Any,
+        projection: CanonicalViewProjectionMapping,
+    ) -> tuple[
+        EffectDocument,
+        ...,
+    ]:
+        """
+        Project all supplied source rows to canonical effects.
+
+        Results must retain source-row identity and should be returned in the
+        same order as ``source_rows``.
         """
 
         ...

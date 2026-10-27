@@ -221,11 +221,11 @@ def test_model_mapping_resolver_maps_reach_point_references(
     assert to_mapping.canonical_attr_id == "fk_reach_point_to"
 
 
-def test_model_mapping_resolver_does_not_add_function_mapping(
+def test_model_mapping_resolver_does_not_add_projection_mapping(
     resolved_mapping,
 ) -> None:
     for cls in resolved_mapping.classes.values():
-        assert cls.function is None
+        assert cls.projection is None
 
 
 def test_model_mapping_resolver_does_not_add_relations(

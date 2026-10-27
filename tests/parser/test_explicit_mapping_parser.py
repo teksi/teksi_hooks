@@ -48,7 +48,7 @@ def test_mapping_parser_rejects_unknown_model_id(
         )
 
 
-def test_agxx_mapping_parser_imports_classes(
+def test_explicit_mapping_parser_imports_classes(
     agxx_mapping,
 ) -> None:
     assert {
@@ -65,25 +65,25 @@ def test_agxx_mapping_parser_imports_classes(
     )
 
 
-def test_agxx_mapping_parser_imports_model_identity_defaults(
+def test_explicit_mapping_parser_imports_model_identity_defaults(
     agxx_mapping,
 ) -> None:
     identity = agxx_mapping.defaults.identity
 
-    assert identity.source_attribute == "obj_id"
+    assert identity.source_attribute == "t_ili_tid"
     assert identity.canonical_attribute == "obj_id"
 
 
-def test_agxx_mapping_parser_imports_default_extension_identity(
+def test_explicit_mapping_parser_imports_default_extension_identity(
     agxx_mapping,
 ) -> None:
     identity = agxx_mapping.defaults.identities["agxx_last_modification"]
 
-    assert identity.source_attribute == "obj_id"
+    assert identity.source_attribute == "t_ili_tid"
     assert identity.canonical_attribute == "fk_element"
 
 
-def test_agxx_mapping_parser_imports_default_attributes(
+def test_explicit_mapping_parser_imports_default_attributes(
     agxx_mapping,
 ) -> None:
     assert set(
@@ -94,7 +94,7 @@ def test_agxx_mapping_parser_imports_default_attributes(
     }
 
 
-def test_agxx_mapping_parser_imports_default_wi_last_modification(
+def test_explicit_mapping_parser_imports_default_wi_last_modification(
     agxx_mapping,
 ) -> None:
     attribute = agxx_mapping.defaults.attributes["letzte_aenderung_wi"]
@@ -105,7 +105,7 @@ def test_agxx_mapping_parser_imports_default_wi_last_modification(
     assert attribute.values == {}
 
 
-def test_agxx_mapping_parser_imports_default_gep_last_modification(
+def test_explicit_mapping_parser_imports_default_gep_last_modification(
     agxx_mapping,
 ) -> None:
     attribute = agxx_mapping.defaults.attributes["letzte_aenderung_gep"]
@@ -116,122 +116,93 @@ def test_agxx_mapping_parser_imports_default_gep_last_modification(
     assert attribute.values == {}
 
 
-def test_agxx_mapping_parser_imports_gepknoten_function(
+def test_explicit_mapping_parser_imports_projection(
     agxx_mapping,
 ) -> None:
     cls = agxx_mapping.classes["GepKnoten"]
 
-    assert cls.function is not None
-    assert cls.function.schema == "tww_app"
-    assert cls.function.name == "fct_agxx_gepknoten_mapping_jsonb"
-    assert cls.function.parameters == {
-        "row": "$row",
-    }
+    assert cls.projection is not None
+    assert cls.projection.kind == "canonical_view"
+
+    assert cls.projection.canonical_view.schema == "tww_app"
+    assert cls.projection.canonical_view.name == "vw_agxx_gepknoten"
+    assert cls.projection.canonical_view.identity_attribute == "obj_id"
+
+    assert (
+        cls.projection.value_lists["istschnittstelle"].relation
+        == "tww_vl.wastewater_node_ag96_is_gateway"
+    )
 
     assert cls.identities == {}
     assert cls.attributes == {}
     assert cls.relations == {}
 
 
-def test_agxx_mapping_parser_imports_gephaltung_function(
-    agxx_mapping,
-) -> None:
-    cls = agxx_mapping.classes["GepHaltung"]
-
-    assert cls.function is not None
-    assert cls.function.schema == "tww_app"
-    assert cls.function.name == "fct_agxx_gephaltung_mapping_jsonb"
-    assert cls.function.parameters == {
-        "row": "$row",
-    }
-
-    assert cls.identities == {}
-    assert cls.attributes == {}
-    assert cls.relations == {}
-
-
-def test_agxx_mapping_parser_imports_ueberlauf_function(
-    agxx_mapping,
-) -> None:
-    cls = agxx_mapping.classes["Ueberlauf_Foerderaggregat"]
-
-    assert cls.function is not None
-    assert cls.function.schema == "tww_app"
-    assert cls.function.name == ("fct_agxx_ueberlauf_foerderaggregat_mapping_jsonb")
-    assert cls.function.parameters == {
-        "row": "$row",
-    }
-
-    assert cls.identities == {}
-    assert cls.attributes == {}
-    assert cls.relations == {}
-
-
-def test_agxx_mapping_parser_imports_attribute_backed_class(
+def test_explicit_mapping_parser_imports_attribute_backed_class(
     agxx_mapping,
 ) -> None:
     cls = agxx_mapping.classes["VersickerungsbereichAG"]
 
-    assert cls.function is None
+    assert cls.projection is None
     assert "q_check" in cls.attributes
     assert "versickerungsmoeglichkeitag" in cls.attributes
 
 
-def test_agxx_mapping_parser_imports_empty_identity_with_defaults(
+def test_explicit_maping_parser_imports_empty_identity_with_defaults(
     agxx_mapping,
 ) -> None:
     identity = agxx_mapping.classes["GepMassnahme"].identities["measure"]
 
-    assert identity.source_attribute == "obj_id"
+    assert identity.source_attribute == "t_ili_tid"
     assert identity.canonical_attribute == "obj_id"
 
 
-def test_agxx_mapping_parser_imports_extension_identity_override(
+def test_explicit_mapping_parser_imports_extension_identity_override(
     agxx_mapping,
 ) -> None:
     identity = agxx_mapping.classes["VersickerungsbereichAG"].identities[
         "agxx_infiltration_zone"
     ]
 
-    assert identity.source_attribute == "obj_id"
+    assert identity.source_attribute == "t_ili_tid"
     assert identity.canonical_attribute == "fk_infiltration_zone"
 
 
-def test_agxx_mapping_parser_imports_base_identity(
+def test_explicit_mapping_parser_imports_base_identity(
     agxx_mapping,
 ) -> None:
     identity = agxx_mapping.classes["VersickerungsbereichAG"].identities[
         "infiltration_zone"
     ]
 
-    assert identity.source_attribute == "obj_id"
+    assert identity.source_attribute == "t_ili_tid"
     assert identity.canonical_attribute == "obj_id"
 
 
-def test_agxx_mapping_parser_imports_building_group_identities(
+def test_explicit_mapping_parser_imports_building_group_identities(
     agxx_mapping,
 ) -> None:
     identities = agxx_mapping.classes["BautenAusserhalbBaugebiet"].identities
 
-    assert identities["building_group"].source_attribute == "obj_id"
+    assert identities["building_group"].source_attribute == "t_ili_tid"
     assert identities["building_group"].canonical_attribute == "obj_id"
 
-    assert identities["agxx_building_group"].source_attribute == "obj_id"
+    assert identities["agxx_building_group"].source_attribute == "t_ili_tid"
     assert identities["agxx_building_group"].canonical_attribute == "fk_building_group"
 
 
-def test_agxx_mapping_parser_imports_catchment_totals_identity(
+def test_explicit_mapping_parser_imports_catchment_totals_identity(
     agxx_mapping,
 ) -> None:
     identity = agxx_mapping.classes["SBWEinzugsgebiet"].identities[
         "agxx_catchment_area_totals"
     ]
 
-    assert identity.source_attribute == "obj_id"
+    assert identity.source_attribute == "t_ili_tid"
     assert identity.canonical_attribute == "fk_catchment_area_totals"
 
 
-def test_agxx_mapping_parser_imports_agxx_extension_attribute_mapping(
+def test_explicit_mapping_parser_imports_agxx_extension_attribute_mapping(
     agxx_mapping,
 ) -> None:
     attribute = agxx_mapping.classes["VersickerungsbereichAG"].attributes["q_check"]
@@ -242,7 +213,7 @@ def test_agxx_mapping_parser_imports_agxx_extension_attribute_mapping(
     assert attribute.values == {}
 
 
-def test_agxx_mapping_parser_imports_base_tww_attribute_mapping(
+def test_explicit_mapping_parser_imports_base_tww_attribute_mapping(
     agxx_mapping,
 ) -> None:
     attribute = agxx_mapping.classes["VersickerungsbereichAG"].attributes[
@@ -255,7 +226,7 @@ def test_agxx_mapping_parser_imports_base_tww_attribute_mapping(
     assert attribute.values == {}
 
 
-def test_agxx_mapping_parser_imports_value_list_mapping(
+def test_explicit_mapping_parser_imports_value_list_mapping(
     agxx_mapping,
 ) -> None:
     value_list = agxx_mapping.classes["GepMassnahme"].attributes["kategorie"].value_list
@@ -265,7 +236,7 @@ def test_agxx_mapping_parser_imports_value_list_mapping(
     assert value_list.mapping_attribute == "value_de"
 
 
-def test_agxx_mapping_parser_imports_current_drainage_value_list(
+def test_explicit_mapping_parser_imports_current_drainage_value_list(
     agxx_mapping,
 ) -> None:
     value_list = (
@@ -281,7 +252,7 @@ def test_agxx_mapping_parser_imports_current_drainage_value_list(
     assert value_list.mapping_attribute == "value_de"
 
 
-def test_agxx_mapping_parser_imports_planned_drainage_value_list(
+def test_explicit_mapping_parser_imports_planned_drainage_value_list(
     agxx_mapping,
 ) -> None:
     value_list = (
@@ -297,7 +268,7 @@ def test_agxx_mapping_parser_imports_planned_drainage_value_list(
     assert value_list.mapping_attribute == "value_de"
 
 
-def test_agxx_mapping_parser_imports_sbw_targets(
+def test_explicit_mapping_parser_imports_sbw_targets(
     agxx_mapping,
 ) -> None:
     cls = agxx_mapping.classes["SBWEinzugsgebiet"]
@@ -452,12 +423,12 @@ def test_mapping_parser_rejects_obsolete_targets_syntax(
         )
 
 
-def test_mapping_parser_rejects_function_and_attributes(
+def test_mapping_parser_rejects_projection_and_attributes(
     parser: ModelMappingParser,
 ) -> None:
     with pytest.raises(
         ValueError,
-        match="row-level function",
+        match="projection",
     ):
         parser.parse_models_dict(
             {
@@ -465,9 +436,13 @@ def test_mapping_parser_rejects_function_and_attributes(
                     "test": {
                         "classes": {
                             "SourceClass": {
-                                "function": {
-                                    "schema": "tww_app",
-                                    "name": "mapping_function",
+                                "projection": {
+                                    "kind": "canonical_view",
+                                    "canonical_view": {
+                                        "schema": "foo",
+                                        "name": "bar",
+                                        "identity_attribute": "baz",
+                                    },
                                 },
                                 "attributes": {
                                     "source_attribute": {
