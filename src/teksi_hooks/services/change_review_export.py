@@ -469,10 +469,7 @@ class ChangeReviewExportService:
             attribute_id,
             value,
         ) in values.items():
-            if (
-                attribute_id
-                not in geometry_attribute_names
-            ):
+            if attribute_id not in geometry_attribute_names:
                 continue
 
             if value is None:
@@ -485,13 +482,10 @@ class ChangeReviewExportService:
                 geometry = value
 
             else:
-                geometry = (
-                    self.geometry_converter
-                    .review_geometry(
-                        class_id=class_id,
-                        attribute_id=attribute_id,
-                        value=value,
-                    )
+                geometry = self.geometry_converter.review_geometry(
+                    class_id=class_id,
+                    attribute_id=attribute_id,
+                    value=value,
                 )
 
             if not isinstance(
@@ -505,9 +499,7 @@ class ChangeReviewExportService:
                     "expected ReviewGeometry."
                 )
 
-            geometries[
-                attribute_id
-            ] = geometry
+            geometries[attribute_id] = geometry
 
         return geometries
 
