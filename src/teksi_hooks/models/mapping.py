@@ -345,6 +345,9 @@ class RelationContext:
     semantic class mapping used by the diff and validation pipeline.
     """
 
+    source_class_id: str = field(
+        metadata={"doc": ("Identifier generated from the source model.")},
+    )
     relation: type = field(
         metadata={"doc": ("SQLAlchemy ORM relation generated for the source model.")},
     )
