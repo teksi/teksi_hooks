@@ -213,3 +213,59 @@ class EffectEvaluationResult:
             )
         },
     )
+
+
+@dataclass(
+    slots=True,
+    frozen=True,
+)
+class EffectProjectionResult:
+    """
+    Ordered result of projecting source objects to effect documents.
+
+    Source objects and effect documents are positionally aligned. Each
+    document must describe the source object at the same index.
+
+    Source objects remain implementation-specific because generic effect
+    projection does not require them to be SQLAlchemy ORM instances.
+    """
+
+    documents: tuple[
+        EffectDocument,
+        ...,
+    ] = field(
+        default_factory=tuple,
+        metadata={
+            "doc": (
+                "Effect documents produced by the projection, ordered to "
+                "match source_objects."
+            )
+        },
+    )
+
+    source_objects: tuple[
+        Any,
+        ...,
+    ] = field(
+        default_factory=tuple,
+        metadata={
+            "doc": (
+                "Source objects projected into effect documents. Objects are "
+                "ordered to match documents."
+            )
+        },
+    )
+
+    def __post_init__(
+        self,
+    ) -> None:
+        if len(
+            self.documents,
+        ) != len(
+            self.source_objects,
+        ):
+            raise ValueError(
+                "Effect projection returned "
+                f"{len(self.documents)} documents for "
+                f"{len(self.source_objects)} source objects."
+            )

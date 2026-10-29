@@ -160,6 +160,17 @@ class ModelMappingCapability:
 
     mapping: ModelMapping
 
+    def materialize(
+        self,
+    ) -> ModelMappingCapability:
+        """
+        Return this already materialized mapping capability.
+
+        ``ModelMappingCapability`` does not retain external lookup providers
+        or operation-scoped resources.
+        """
+        return self
+
     def class_definition(
         self,
         class_id: str,
@@ -464,7 +475,28 @@ class ImplicitModelMappingCapability(
 
     Returned class mappings must be resolved. Callers must not need to merge
     model defaults, inherited relations or localized source identifiers.
+
+    Implementations that retain external resources, such as database
+    sessions, must support materialization into a detached
+    ``ModelMappingCapability``.
     """
+
+    def materialize(
+        self,
+    ) -> ModelMappingCapability:
+        """
+        Materialize all available implicit mappings.
+
+        The returned capability must not retain this provider, database
+        sessions, active transactions, cursors or other operation-scoped
+        resources.
+
+        Every class mapping must contain all resolved source localizations,
+        identities, attributes, values, relations, foreign keys, defaults and
+        projection declarations required by later lookup operations.
+        """
+
+        ...
 
 
 @dataclass(slots=True, frozen=True)
@@ -477,12 +509,31 @@ class EffectiveModelMappingCapability:
     fall back to the implicit mapping provider.
 
     A function-backed explicit class remains authoritative for projection.
-    Consumers must inspect `ClassMapping.function` before requesting
+    Consumers must inspect ``ClassMapping.function`` before requesting
     attribute mappings for that class.
+
+    Instances created through ``load()`` are detached from the original
+    implicit mapping provider and may safely outlive the operation scope in
+    which that provider was created.
     """
 
     explicit_mapping: ModelMappingCapability
-    implicit_mapping: ImplicitModelMappingCapability | None = None
+
+    implicit_mapping: ModelMappingLookupCapability | None = None
+
+    @classmethod
+    def load(
+        cls,
+        *,
+        explicit_mapping: ModelMappingCapability,
+        implicit_mapping: ImplicitModelMappingCapability | None = None,
+    ) -> EffectiveModelMappingCapability:
+        return cls(
+            explicit_mapping=explicit_mapping,
+            implicit_mapping=(
+                implicit_mapping.materialize() if implicit_mapping is not None else None
+            ),
+        )
 
     def class_definition(
         self,
