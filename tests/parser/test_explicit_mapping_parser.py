@@ -126,7 +126,7 @@ def test_explicit_mapping_parser_imports_projection(
 
     assert cls.projection.canonical_view.schema == "tww_app"
     assert cls.projection.canonical_view.name == "vw_agxx_gepknoten"
-    assert cls.projection.canonical_view.identity_attribute == "obj_id"
+    assert cls.projection.canonical_view.target_identity_attribute == "obj_id"
 
     assert (
         cls.projection.value_lists["istschnittstelle"].relation
@@ -312,6 +312,7 @@ def test_sia405_mapping_parser_imports_provider_relation(
     assert relation.referenced_attribute_id == "obj_id"
     assert relation.localisations == {
         "de": "DatenbewirtschafterRef",
+        "fr": "fournisseur_des_donneesref",
     }
 
 
@@ -325,6 +326,7 @@ def test_sia405_mapping_parser_imports_owner_relation(
     assert relation.referenced_attribute_id == "obj_id"
     assert relation.localisations == {
         "de": "EigentuemerRef",
+        "fr": "proprietaireref",
     }
 
 
@@ -349,7 +351,8 @@ def test_sia405_mapping_parser_imports_reach_point_from_relation(
     assert relation.referenced_class_id == "reach_point"
     assert relation.referenced_attribute_id == "obj_id"
     assert relation.localisations == {
-        "de": "HaltungspunktVonRef",
+        "de": "vonhaltungspunktref",
+        "fr": "point_troncon_deref",
     }
 
 
@@ -361,7 +364,8 @@ def test_sia405_mapping_parser_imports_reach_point_to_relation(
     assert relation.referenced_class_id == "reach_point"
     assert relation.referenced_attribute_id == "obj_id"
     assert relation.localisations == {
-        "de": "HaltungspunktNachRef",
+        "de": "nachhaltungspunktref",
+        "fr": "point_troncon_versref",
     }
 
 
@@ -441,7 +445,7 @@ def test_mapping_parser_rejects_projection_and_attributes(
                                     "canonical_view": {
                                         "schema": "foo",
                                         "name": "bar",
-                                        "identity_attribute": "baz",
+                                        "target_identity_attribute": "baz",
                                     },
                                 },
                                 "attributes": {
@@ -571,7 +575,7 @@ def test_mapping_parser_rejects_unknown_inherited_model(
             {
                 "models": {
                     "child": {
-                        "defaults": {
+                        "declarative_defaults": {
                             "inherit_from": "missing",
                         }
                     }
@@ -591,12 +595,12 @@ def test_mapping_parser_rejects_inheritance_cycle(
             {
                 "models": {
                     "first": {
-                        "defaults": {
+                        "declarative_defaults": {
                             "inherit_from": "second",
                         }
                     },
                     "second": {
-                        "defaults": {
+                        "declarative_defaults": {
                             "inherit_from": "first",
                         }
                     },

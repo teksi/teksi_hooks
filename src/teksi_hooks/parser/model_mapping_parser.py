@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
 
@@ -23,6 +23,30 @@ from ..models.mapping import (
     ValueListMapping,
 )
 from ..resolver.model_mapping_resolver import ModelMappingInheritanceResolver
+
+
+@dataclass(
+    slots=True,
+    frozen=True,
+)
+class ProjectionDefaults:
+    """
+    Hold model-level defaults for canonical-view projections.
+    No docs as it is only a parsing helper.
+    """
+
+    source_identity_attribute: str
+
+    target_identity_attribute: str
+
+    references: Mapping[
+        str,
+        ProjectionReferenceMapping,
+    ]
+
+    canonical_value_attribute: str
+
+    lookup_value_attribute: str
 
 
 @dataclass(slots=True)
@@ -65,21 +89,22 @@ class ModelMappingParser:
         model_id: str | None = None,
     ) -> ModelMapping:
         """
-        Parse one model mapping from a YAML file.
-
-        ``model_id`` may be omitted only when the file contains exactly one
-        model.
+        Parse, inherit and finalize one model mapping from a YAML file.
         """
-
         mappings = self.parse_models_file(
             path,
         )
+
         resolved_mappings = ModelMappingInheritanceResolver(
-            mappings=mappings
+            mappings=mappings,
         ).resolve_all()
 
-        return self._select_model(
+        finalized_mappings = self._resolve_projection_reference_identities(
             mappings=resolved_mappings,
+        )
+
+        return self._select_model(
+            mappings=finalized_mappings,
             model_id=model_id,
         )
 
@@ -113,9 +138,8 @@ class ModelMappingParser:
         model_id: str | None = None,
     ) -> ModelMapping:
         """
-        Parse and resolve one model mapping from a loaded YAML document.
+        Parse, inherit and finalize one model mapping from loaded YAML.
         """
-
         mappings = self.parse_models_dict(
             data,
         )
@@ -124,8 +148,12 @@ class ModelMappingParser:
             mappings=mappings,
         ).resolve_all()
 
-        return self._select_model(
+        finalized_mappings = self._resolve_projection_reference_identities(
             mappings=resolved_mappings,
+        )
+
+        return self._select_model(
+            mappings=finalized_mappings,
             model_id=model_id,
         )
 
@@ -215,32 +243,44 @@ class ModelMappingParser:
         self,
         *,
         model_id: str,
-        raw: Mapping[str, Any],
+        raw: Mapping[
+            str,
+            Any,
+        ],
     ) -> ModelMapping:
         """
-        Parse one model without resolving inheritance or defaults.
+        Parse one model without resolving model inheritance.
         """
-
         path = f"models.{model_id}"
 
-        defaults = self._parse_defaults(
+        unknown_keys = set(
+            raw,
+        ) - {
+            "declarative_defaults",
+            "projection_defaults",
+            "classes",
+            "is_ssot",
+        }
+
+        if unknown_keys:
+            raise ValueError(
+                f"{path} contains unsupported keys: {tuple(sorted(unknown_keys))!r}."
+            )
+
+        declarative_defaults = self._parse_defaults(
             raw.get(
-                "defaults",
+                "declarative_defaults",
                 {},
             ),
-            path=f"{path}.defaults",
+            path=(f"{path}.declarative_defaults"),
         )
 
-        (
-            projection_reference_defaults,
-            projection_value_attribute_default,
-            projection_mapping_attribute_default,
-        ) = self._parse_projection_defaults(
+        projection_defaults = self._parse_projection_defaults(
             raw.get(
                 "projection_defaults",
                 {},
             ),
-            path=f"{path}.projection_defaults",
+            path=(f"{path}.projection_defaults"),
         )
 
         classes = self._parse_classes(
@@ -248,16 +288,14 @@ class ModelMappingParser:
                 "classes",
                 {},
             ),
-            default_identity=defaults.identity,
-            projection_reference_defaults=(projection_reference_defaults),
-            projection_value_attribute_default=(projection_value_attribute_default),
-            projection_mapping_attribute_default=(projection_mapping_attribute_default),
+            default_identity=(declarative_defaults.identity),
+            projection_defaults=(projection_defaults),
             path=f"{path}.classes",
         )
 
         return ModelMapping(
             classes=classes,
-            defaults=defaults,
+            defaults=declarative_defaults,
             is_ssot=self._boolean(
                 raw.get(
                     "is_ssot",
@@ -284,6 +322,22 @@ class ModelMappingParser:
             raw or {},
             path=path,
         )
+
+        unknown_keys = set(
+            raw,
+        ) - {
+            "inherit_from",
+            "source_attribute",
+            "target_attribute",
+            "identities",
+            "attributes",
+            "relations",
+        }
+
+        if unknown_keys:
+            raise ValueError(
+                f"{path} contains unsupported keys: {tuple(sorted(unknown_keys))!r}."
+            )
 
         source_attribute = self._optional_string(
             raw.get(
@@ -344,28 +398,10 @@ class ModelMappingParser:
         raw: Any,
         *,
         path: str,
-    ) -> tuple[
-        dict[
-            str,
-            ProjectionReferenceMapping,
-        ],
-        str,
-        str,
-    ]:
+    ) -> ProjectionDefaults:
         """
-        Parse model-local defaults for projection-backed mappings.
-
-        The returned defaults are applied while parsing the model's class
-        projections. They are independent of declarative identities, attributes,
-        and relations.
-
-        Returns:
-
-        - default projection references;
-        - default canonical value attribute;
-        - default lookup/mapping attribute.
+        Parse model-local defaults for canonical-view projections.
         """
-
         defaults_data = self._mapping(
             raw or {},
             path=path,
@@ -374,6 +410,8 @@ class ModelMappingParser:
         unknown_keys = set(
             defaults_data,
         ) - {
+            "source_identity_attribute",
+            "target_identity_attribute",
             "references",
             "value_lists",
         }
@@ -382,6 +420,28 @@ class ModelMappingParser:
             raise ValueError(
                 f"{path} contains unsupported keys: {tuple(sorted(unknown_keys))!r}."
             )
+
+        source_identity_attribute = self._optional_string(
+            defaults_data.get(
+                "source_identity_attribute",
+            ),
+            path=(f"{path}.source_identity_attribute"),
+            default="t_ili_tid",
+        )
+
+        target_identity_attribute = self._optional_string(
+            defaults_data.get(
+                "target_identity_attribute",
+            ),
+            path=(f"{path}.target_identity_attribute"),
+            default="obj_id",
+        )
+
+        if source_identity_attribute is None:
+            raise ValueError(f"{path}.source_identity_attribute must not be null.")
+
+        if target_identity_attribute is None:
+            raise ValueError(f"{path}.target_identity_attribute must not be null.")
 
         references = self._parse_projection_references(
             defaults_data.get(
@@ -462,10 +522,12 @@ class ModelMappingParser:
                 f"{path}.value_lists.defaults.lookup_value_attribute must not be null."
             )
 
-        return (
-            references,
-            canonical_value_attribute,
-            lookup_value_attribute,
+        return ProjectionDefaults(
+            source_identity_attribute=(source_identity_attribute),
+            target_identity_attribute=(target_identity_attribute),
+            references=references,
+            canonical_value_attribute=(canonical_value_attribute),
+            lookup_value_attribute=(lookup_value_attribute),
         )
 
     def _parse_classes(
@@ -473,12 +535,7 @@ class ModelMappingParser:
         raw: Any,
         *,
         default_identity: CanonicalIdentityMapping,
-        projection_reference_defaults: Mapping[
-            str,
-            ProjectionReferenceMapping,
-        ],
-        projection_value_attribute_default: str,
-        projection_mapping_attribute_default: str,
+        projection_defaults: ProjectionDefaults,
         path: str,
     ) -> dict[
         str,
@@ -487,7 +544,6 @@ class ModelMappingParser:
         """
         Parse source-class mappings.
         """
-
         raw_classes = self._mapping(
             raw or {},
             path=path,
@@ -507,11 +563,7 @@ class ModelMappingParser:
                     path=f"{path}.{class_id}",
                 ),
                 default_identity=default_identity,
-                projection_reference_defaults=(projection_reference_defaults),
-                projection_value_attribute_default=(projection_value_attribute_default),
-                projection_mapping_attribute_default=(
-                    projection_mapping_attribute_default
-                ),
+                projection_defaults=(projection_defaults),
                 path=f"{path}.{class_id}",
             )
             for (
@@ -529,35 +581,27 @@ class ModelMappingParser:
             Any,
         ],
         default_identity: CanonicalIdentityMapping,
-        projection_reference_defaults: Mapping[
-            str,
-            ProjectionReferenceMapping,
-        ],
-        projection_value_attribute_default: str,
-        projection_mapping_attribute_default: str,
+        projection_defaults: ProjectionDefaults,
         path: str,
     ) -> ClassMapping:
         """
-        Parse one class mapping.
+        Parse one executable source-class mapping.
 
-        Projection-backed classes must not define declarative identities,
-        attributes, or relations. A canonical-view projection is authoritative
-        for the complete semantic mapping of the class.
+        A class must be either:
 
-        Class localisations remain valid for both declarative and
-        projection-backed mappings because they identify the corresponding
-        runtime source class.
+        - projection-backed; or
+        - declaratively mapped.
+
+        Quarantine-only relations used by projection references are not class
+        mappings. Their identities must be declared explicitly on the reference.
         """
-
         del class_id
 
         projection = self._parse_projection(
             raw.get(
                 "projection",
             ),
-            reference_defaults=(projection_reference_defaults),
-            value_attribute_default=(projection_value_attribute_default),
-            mapping_attribute_default=(projection_mapping_attribute_default),
+            defaults=projection_defaults,
             path=f"{path}.projection",
         )
 
@@ -643,6 +687,20 @@ class ModelMappingParser:
                     f"{tuple(sorted(unsupported_projection_keys))!r}."
                 )
 
+            unknown_projection_class_keys = set(
+                raw,
+            ) - {
+                "projection",
+                "localisations",
+            }
+
+            if unknown_projection_class_keys:
+                raise ValueError(
+                    f"{path} contains unsupported projection-backed "
+                    "class keys: "
+                    f"{tuple(sorted(unknown_projection_class_keys))!r}."
+                )
+
             return ClassMapping(
                 canonical_class_id=None,
                 identity=None,
@@ -651,6 +709,24 @@ class ModelMappingParser:
                 relations={},
                 localisations=localisations,
                 projection=projection,
+            )
+
+        unknown_declarative_keys = set(
+            raw,
+        ) - {
+            "class",
+            "source_attribute",
+            "target_attribute",
+            "identities",
+            "attributes",
+            "relations",
+            "localisations",
+        }
+
+        if unknown_declarative_keys:
+            raise ValueError(
+                f"{path} contains unsupported declarative class keys: "
+                f"{tuple(sorted(unknown_declarative_keys))!r}."
             )
 
         class_identity = CanonicalIdentityMapping(
@@ -714,6 +790,20 @@ class ModelMappingParser:
                 f"{path}.class refers to canonical class "
                 f"{canonical_class_id!r}, but no identity is "
                 "declared for that class."
+            )
+
+        is_executable = (
+            canonical_class_id is not None
+            or bool(identities)
+            or bool(attributes)
+            or bool(relations)
+        )
+
+        if not is_executable:
+            raise ValueError(
+                f"{path} does not define an executable mapping. "
+                "Declare a canonical-view projection or declarative "
+                "identities, attributes or relations."
             )
 
         return ClassMapping(
@@ -1100,24 +1190,12 @@ class ModelMappingParser:
         self,
         raw: Any,
         *,
-        reference_defaults: Mapping[
-            str,
-            ProjectionReferenceMapping,
-        ],
-        value_attribute_default: str,
-        mapping_attribute_default: str,
+        defaults: ProjectionDefaults,
         path: str,
     ) -> CanonicalViewProjectionMapping | None:
         """
-        Parse one class-level semantic projection.
-
-        Model-level projection references are inherited by source attribute.
-        Class-level references with the same source attribute override them.
-
-        Value-list column defaults are materialized into each parsed
-        ``ValueListMapping``.
+        Parse one class-level canonical-view projection.
         """
-
         if raw is None:
             return None
 
@@ -1136,10 +1214,49 @@ class ModelMappingParser:
         if kind != "canonical_view":
             raise ValueError(f"{path}.kind must be 'canonical_view', got {kind!r}.")
 
+        unknown_keys = set(
+            projection_data,
+        ) - {
+            "kind",
+            "source_identity_attribute",
+            "target_identity_attribute",
+            "canonical_view",
+            "references",
+            "value_lists",
+        }
+
+        if unknown_keys:
+            raise ValueError(
+                f"{path} contains unsupported keys: {tuple(sorted(unknown_keys))!r}."
+            )
+
+        source_identity_attribute = self._optional_string(
+            projection_data.get(
+                "source_identity_attribute",
+            ),
+            path=(f"{path}.source_identity_attribute"),
+            default=(defaults.source_identity_attribute),
+        )
+
+        target_identity_attribute = self._optional_string(
+            projection_data.get(
+                "target_identity_attribute",
+            ),
+            path=(f"{path}.target_identity_attribute"),
+            default=(defaults.target_identity_attribute),
+        )
+
+        if source_identity_attribute is None:
+            raise ValueError(f"{path}.source_identity_attribute must not be null.")
+
+        if target_identity_attribute is None:
+            raise ValueError(f"{path}.target_identity_attribute must not be null.")
+
         canonical_view = self._parse_canonical_view(
             projection_data.get(
                 "canonical_view",
             ),
+            target_identity_attribute=(target_identity_attribute),
             path=f"{path}.canonical_view",
         )
 
@@ -1152,7 +1269,7 @@ class ModelMappingParser:
         )
 
         references = {
-            **reference_defaults,
+            **defaults.references,
             **local_references,
         }
 
@@ -1161,30 +1278,17 @@ class ModelMappingParser:
                 "value_lists",
                 {},
             ),
-            value_attribute_default=(value_attribute_default),
-            mapping_attribute_default=(mapping_attribute_default),
+            value_attribute_default=(defaults.canonical_value_attribute),
+            mapping_attribute_default=(defaults.lookup_value_attribute),
             path=f"{path}.value_lists",
         )
 
-        unknown_keys = set(
-            projection_data,
-        ) - {
-            "kind",
-            "canonical_view",
-            "references",
-            "value_lists",
-        }
-
-        if unknown_keys:
-            raise ValueError(
-                f"{path} contains unsupported keys: {tuple(sorted(unknown_keys))!r}."
-            )
-
         return CanonicalViewProjectionMapping(
             canonical_view=canonical_view,
+            kind="canonical_view",
+            source_identity_attribute=(source_identity_attribute),
             references=references,
             value_lists=value_lists,
-            kind="canonical_view",
         )
 
     def _parse_projection_references(
@@ -1269,13 +1373,7 @@ class ModelMappingParser:
                     "identity_attribute",
                 ),
                 path=(f"{reference_path}.source.identity_attribute"),
-                default="t_ili_tid",
             )
-
-            if identity_attribute is None:
-                raise ValueError(
-                    f"{reference_path}.source.identity_attribute must not be null."
-                )
 
             references[source_attribute] = ProjectionReferenceMapping(
                 source_class_id=self._required_string(
@@ -1466,12 +1564,12 @@ class ModelMappingParser:
         self,
         raw: Any,
         *,
+        target_identity_attribute: str,
         path: str,
     ) -> CanonicalViewMapping:
         """
         Parse one read-only canonical comparison view.
         """
-
         view_data = self._mapping(
             raw,
             path=path,
@@ -1482,24 +1580,12 @@ class ModelMappingParser:
         ) - {
             "schema",
             "name",
-            "identity_attribute",
         }
 
         if unknown_keys:
             raise ValueError(
                 f"{path} contains unsupported keys: {tuple(sorted(unknown_keys))!r}."
             )
-
-        identity_attribute = self._optional_string(
-            view_data.get(
-                "identity_attribute",
-            ),
-            path=f"{path}.identity_attribute",
-            default="obj_id",
-        )
-
-        if identity_attribute is None:
-            raise ValueError(f"{path}.identity_attribute must not be null.")
 
         return CanonicalViewMapping(
             schema=self._required_string(
@@ -1514,8 +1600,156 @@ class ModelMappingParser:
                 ),
                 path=f"{path}.name",
             ),
-            identity_attribute=identity_attribute,
+            target_identity_attribute=(target_identity_attribute),
         )
+
+    def _resolve_projection_reference_identities(
+        self,
+        *,
+        mappings: Mapping[
+            str,
+            ModelMapping,
+        ],
+    ) -> dict[
+        str,
+        ModelMapping,
+    ]:
+        """
+        Resolve effective source identities for projection references.
+
+        Explicit reference identity attributes take precedence. Otherwise, the
+        identity is inherited from the referenced projection-backed class.
+        """
+        return {
+            model_id: replace(
+                mapping,
+                classes=(
+                    self._resolve_model_projection_references(
+                        model_id=model_id,
+                        classes=mapping.classes,
+                    )
+                ),
+            )
+            for (
+                model_id,
+                mapping,
+            ) in mappings.items()
+        }
+
+    def _resolve_model_projection_references(
+        self,
+        *,
+        model_id: str,
+        classes: Mapping[
+            str,
+            ClassMapping,
+        ],
+    ) -> dict[
+        str,
+        ClassMapping,
+    ]:
+        """
+        Resolve effective identities for projection source references.
+
+        Resolution order:
+
+        1. Use an explicitly declared reference identity.
+        2. Otherwise inherit the source identity from a referenced
+        projection-backed class.
+
+        References to unmapped quarantine relations must declare
+        ``source.identity_attribute`` explicitly.
+        """
+        resolved_classes: dict[
+            str,
+            ClassMapping,
+        ] = {}
+
+        for (
+            source_class_id,
+            class_mapping,
+        ) in classes.items():
+            projection = class_mapping.projection
+
+            if projection is None:
+                resolved_classes[source_class_id] = class_mapping
+
+                continue
+
+            resolved_references: dict[
+                str,
+                ProjectionReferenceMapping,
+            ] = {}
+
+            for (
+                source_attribute,
+                reference,
+            ) in projection.references.items():
+                identity_attribute = reference.identity_attribute
+
+                if identity_attribute is None:
+                    referenced_class_mapping = classes.get(
+                        reference.source_class_id,
+                    )
+
+                    if referenced_class_mapping is None:
+                        raise ValueError(
+                            "Projection reference "
+                            f"{model_id!r}."
+                            f"{source_class_id!r}."
+                            f"{source_attribute!r} refers to "
+                            "an unknown or quarantine-only source "
+                            f"class {reference.source_class_id!r}, "
+                            "but `source.identity_attribute` is "
+                            "not declared."
+                        )
+
+                    referenced_projection = referenced_class_mapping.projection
+
+                    if referenced_projection is None:
+                        raise ValueError(
+                            "Projection reference "
+                            f"{model_id!r}."
+                            f"{source_class_id!r}."
+                            f"{source_attribute!r} refers to "
+                            f"{reference.source_class_id!r}, which "
+                            "is declaratively mapped rather than "
+                            "projection-backed. Declare "
+                            "`source.identity_attribute` explicitly "
+                            "if that reference is intentional."
+                        )
+
+                    identity_attribute = referenced_projection.source_identity_attribute
+
+                if (
+                    not isinstance(
+                        identity_attribute,
+                        str,
+                    )
+                    or not identity_attribute.strip()
+                ):
+                    raise ValueError(
+                        "Projection reference "
+                        f"{model_id!r}."
+                        f"{source_class_id!r}."
+                        f"{source_attribute!r} does not resolve "
+                        "to a valid source identity attribute."
+                    )
+
+                resolved_references[source_attribute] = replace(
+                    reference,
+                    identity_attribute=(identity_attribute.strip()),
+                )
+
+            resolved_classes[source_class_id] = replace(
+                class_mapping,
+                projection=replace(
+                    projection,
+                    references=resolved_references,
+                ),
+            )
+
+        return resolved_classes
 
     def _validate_inheritance(
         self,
