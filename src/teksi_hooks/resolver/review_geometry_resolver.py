@@ -19,7 +19,7 @@ from teksi_hooks.models.review import (
     slots=True,
     frozen=True,
 )
-class TwwReviewGeometryConverter(
+class ReviewGeometryResolver(
     ReviewGeometryConverter,
 ):
     """
