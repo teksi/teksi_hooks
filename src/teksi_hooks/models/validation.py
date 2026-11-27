@@ -288,15 +288,28 @@ class Change:
         """
         Return whether two attribute values differ.
 
-        A comparison result must be a real Python boolean. GeoAlchemy geometry
-        values are handled separately because their equality operators produce
-        SQLAlchemy expressions.
+        Geometry-to-geometry comparison is temporarily skipped for the POC.
+        Geometry creation and removal remain changes because those comparisons
+        have exactly one null value.
         """
+        del attribute_name
+
         if old_value is new_value:
             return False
 
         if old_value is None or new_value is None:
             return True
+
+        if isinstance(
+            old_value,
+            WKBElement,
+        ) and isinstance(
+            new_value,
+            WKBElement,
+        ):
+            # TODO: Replace this bypass with geometry harmonization before
+            # constructing Change instances.
+            return False
 
         comparison = old_value != new_value
 
@@ -306,49 +319,12 @@ class Change:
         ):
             return comparison
 
-        if isinstance(
-            old_value,
-            WKBElement,
-        ) and isinstance(
-            new_value,
-            WKBElement,
-        ):
-            return not cls._spatial_values_equal(
-                old_value=old_value,
-                new_value=new_value,
-            )
-
         raise TypeError(
-            "Attribute comparison returned a non-boolean result "
-            f"for {attribute_name!r}. Old value type: "
-            f"{type(old_value)!r}; new value type: "
-            f"{type(new_value)!r}; comparison type: "
-            f"{type(comparison)!r}."
+            "Attribute comparison returned a non-boolean result. "
+            f"Old value type: {type(old_value)!r}; "
+            f"new value type: {type(new_value)!r}; "
+            f"comparison type: {type(comparison)!r}."
         )
-
-    @staticmethod
-    def _spatial_values_equal(
-        *,
-        old_value: WKBElement,
-        new_value: WKBElement,
-    ) -> bool:
-        """
-        Compare two EWKB values using topological geometry equality.
-
-        SRID equality is checked separately because Shapely geometry equality
-        does not include the coordinate reference system.
-        """
-        old_srid = getattr(old_value, "srid", None)
-        new_srid = getattr(new_value, "srid", None)
-
-        if (
-            old_srid not in {None, -1}
-            and new_srid not in {None, -1}
-            and old_srid != new_srid
-        ):
-            return False
-
-        return bytes(old_value.data) == bytes(new_value.data)
 
 
 class ChangeOperation(StrEnum):
